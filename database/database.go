@@ -10,12 +10,13 @@ type Database interface {
 	GetUser(id uuid.UUID) (*models.User, error)
 	UpdateUser(*models.User) error
 	DeleteUser(id uuid.UUID) error
+	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
 
-	CreateEvent(*models.Event) error
+	CreateEventLq(*models.Event) error
 	GetEvent(id uuid.UUID) (*models.Event, error)
 	UpdateEvent(*models.Event) error
 	DeleteEvent(id uuid.UUID) error
-	GetEventsByAttendee(attendeeID uuid.UUID) ([]*models.Event, error)
+//GetEventsByAttendee(attendeeID uuid.UUID) ([]*models.Event, error)
 	EventExists(eventID uuid.UUID) (bool, error)
 
 	CreateActivity(*models.Activity) error
@@ -27,7 +28,7 @@ type Database interface {
 	GetAttendee(id uuid.UUID) (*models.Attendee, error)
 	UpdateAttendee(*models.Attendee) error
 	DeleteAttendee(id uuid.UUID) error
-	GetAttendeesByEvent(eventID uuid.UUID) ([]*models.Attendee, error)
+	GetAttendeesByEvent(eventID uuid.UUID) ([]models.Attendee, error)
 
 	CreateCheckInLog(*models.CheckInLog) error
 	GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error)
@@ -37,3 +38,5 @@ type Database interface {
 
 	Close() error
 }
+
+

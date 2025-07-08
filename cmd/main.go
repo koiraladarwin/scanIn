@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/koiraladarwin/scanin/constants"
 	"github.com/koiraladarwin/scanin/database/postgres"
 	"github.com/koiraladarwin/scanin/handlers"
 )
@@ -19,22 +20,25 @@ func main() {
 		log.Fatal("could not connect to database:", err)
 	}
 
-	r := mux.NewRouter()
-	api := r.PathPrefix("/api/v1").Subrouter()
+	api := mux.NewRouter()
 
 	handler := handlers.New(db)
 
-	api.HandleFunc("/user", handler.CreateUser).Methods(post)
+	api.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
+  api.HandleFunc("/users/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
 	
-  api.HandleFunc("/attendees", handler.RegisterAttendee).Methods(post)
-  api.HandleFunc("/attendees/{event_id}", handler.GetAttendeesByEvent).Methods(get)
-	
-  api.HandleFunc("/checkins", handler.CreateCheckIn).Methods(post)
-	api.HandleFunc("/checkins/{id}", handler.ModifyCheckIn).Methods(put)
-	api.HandleFunc("/checkins/{id}", handler.ModifyCheckIn).Methods(put)
+  api.HandleFunc("/event", handler.CreateEvent).Methods(constants.Post)
+  
+  api.HandleFunc("/activity", handler.CreateActivity).Methods(constants.Post)
+  
+  api.HandleFunc("/attendees", handler.RegisterAttendee).Methods(constants.Post)
+  
+  api.HandleFunc("/checkins", handler.CreateCheckIn).Methods(constants.Post)
+	api.HandleFunc("/checkins/{id}", handler.ModifyCheckIn).Methods(constants.Put)
 
-	log.Printf("Server running on port %s", port)
-	err = http.ListenAndServe(":"+port, r)
+	
+  log.Printf("Server running on port %s", port)
+	err = http.ListenAndServe(":"+port, api)
 	if err != nil {
 		log.Fatal(err)
 	}

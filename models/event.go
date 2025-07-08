@@ -12,7 +12,6 @@ type User struct {
 	FullName string    `json:"full_name"`
 	Email    string    `json:"email"`
 	Phone    string    `json:"phone"`
-	Role     string    `json:"role"` // "participant", "staff", "member"
 }
 
 // Event represents a specific event like "Teej 2025"
@@ -40,6 +39,7 @@ type Attendee struct {
 	ID      uuid.UUID `json:"id"`
 	UserID  uuid.UUID `json:"user_id"`  // FK to User
 	EventID uuid.UUID `json:"event_id"` // FK to Event
+	Role     string    `json:"role"` // "participant", "staff", "member"
 }
 
 // CheckInLog is created when an attendee scans at an activity

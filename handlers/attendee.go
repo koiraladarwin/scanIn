@@ -7,17 +7,19 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	db "github.com/koiraladarwin/scanin/database"
+	"github.com/koiraladarwin/scanin/database"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
 )
 
 /*
 RegisterAttendee accepts JSON:
-{
-  "user_id": "uuid-string",
-  "event_id": "uuid-string"
-}
+
+	{
+	  "user_id": "uuid-string",
+	  "event_id": "uuid-string",
+		"role": "participant|staff|member"
+	}
 
 Returns:
 - 201 Created with attendee JSON on success
@@ -38,9 +40,14 @@ func (h *Handler) RegisterAttendee(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if a.Role != "participant" && a.Role != "staff" && a.Role != "member" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
+
 	err := h.DB.CreateAttendee(&a)
 	if err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) { 
+		if errors.Is(err, db.ErrAlreadyExists) {
 			utils.RespondWithError(w, http.StatusConflict, "Attendee already registered")
 			return
 		}
@@ -54,7 +61,7 @@ func (h *Handler) RegisterAttendee(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-GetAttendeesByEvent
+GetUsersByEvent
 Fetches list of attendees for given event ID (UUID in URL path param).
 
 Returns:
@@ -63,7 +70,7 @@ Returns:
 - 404 Not Found if event does not exist
 - 500 Internal Server Error on database errors
 */
-func (h *Handler) GetAttendeesByEvent(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 	eventIDStr := mux.Vars(r)["event_id"]
 	eventID, err := uuid.Parse(eventIDStr)
 	if err != nil {
@@ -82,11 +89,12 @@ func (h *Handler) GetAttendeesByEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attendees, err := h.DB.GetAttendeesByEvent(eventID)
+	attendees, err := h.DB.GetUsersByEvent(eventID)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed to fetch attendees")
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(attendees)
 }

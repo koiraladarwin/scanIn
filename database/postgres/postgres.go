@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/koiraladarwin/scanin/database"
 	"github.com/lib/pq"
@@ -40,8 +39,7 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			full_name TEXT NOT NULL,
 			email TEXT UNIQUE NOT NULL,
-			phone TEXT,
-			role TEXT NOT NULL CHECK (role IN ('participant', 'staff', 'member'))
+			phone TEXT
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS events (
@@ -66,6 +64,7 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+			role TEXT NOT NULL CHECK (role IN ('participant', 'staff', 'member')),
       UNIQUE (user_id, event_id)
 		);`,
 
@@ -75,7 +74,8 @@ func (p *PostgresDB) createTables() error {
 			activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
 			scanned_at TIMESTAMP NOT NULL DEFAULT now(),
 			status TEXT NOT NULL,
-			scanned_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT
+			scanned_by UUID NOT NULL REFERENCES attendees(id) ON DELETE RESTRICT,
+      UNIQUE (attendee_id, activity_id)
 		);`,
 	}
 

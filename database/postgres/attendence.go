@@ -8,9 +8,9 @@ import (
 
 // CreateAttendee inserts a new attendee and returns the generated UUID
 func (p *PostgresDB) CreateAttendee(a *models.Attendee) error {
-	query := `INSERT INTO attendees (user_id, event_id) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO attendees (user_id, event_id, role) VALUES ($1, $2, $3) RETURNING id`
 
-	err := p.sql.QueryRow(query, a.UserID, a.EventID).Scan(&a.ID)
+	err := p.sql.QueryRow(query, a.UserID, a.EventID, a.Role).Scan(&a.ID)
 	if err != nil {
 		if isUniqueViolationError(err) {
 			return db.ErrAlreadyExists
@@ -23,15 +23,15 @@ func (p *PostgresDB) CreateAttendee(a *models.Attendee) error {
 // GetAttendee fetches an attendee by UUID
 func (p *PostgresDB) GetAttendee(id uuid.UUID) (*models.Attendee, error) {
 	a := &models.Attendee{}
-	query := `SELECT id, user_id, event_id FROM attendees WHERE id=$1`
-	err := p.sql.QueryRow(query, id).Scan(&a.ID, &a.UserID, &a.EventID)
+	query := `SELECT id, user_id, event_id ,role FROM attendees WHERE id=$1`
+	err := p.sql.QueryRow(query, id).Scan(&a.ID, &a.UserID, &a.EventID, &a.Role)
 	return a, err
 }
 
 // GetAttendee fetches an attendee by UUID
-func (p *PostgresDB) GetAttendeeByEvents(eventID uuid.UUID) ([]models.Attendee, error) {
+func (p *PostgresDB) GetAttendeesByEvent(eventID uuid.UUID) ([]models.Attendee, error) {
 	var attendees []models.Attendee
-	query := `SELECT id, user_id, event_id FROM attendees WHERE event_id = $1`
+	query := `SELECT id, user_id, event_id, role FROM attendees WHERE event_id = $1`
 	rows, err := p.sql.Query(query, eventID)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (p *PostgresDB) GetAttendeeByEvents(eventID uuid.UUID) ([]models.Attendee, 
 
 	for rows.Next() {
 		var attendee models.Attendee
-		if err := rows.Scan(&attendee.ID, &attendee.UserID, &attendee.EventID); err != nil {
+		if err := rows.Scan(&attendee.ID, &attendee.UserID, &attendee.EventID, &attendee.Role); err != nil {
 			return nil, err
 		}
 		attendees = append(attendees, attendee)

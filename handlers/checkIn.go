@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -12,39 +13,14 @@ import (
 
 /*
 CreateCheckIn accepts JSON:
-{
-  "attendee_id": "uuid-string",
-  "activity_id": "uuid-string",
-  "scanned_at": "timestamp",
-  "status": "string",
-  "scanned_by": "string"
-}
 
-Returns:
-- 201 Created with created check-in JSON on success
-- 400 Bad Request for invalid input
-- 500 Internal Server Error on DB failure
-*/
-func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
-	var c models.CheckInLog
-	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-		return
+	{
+	  "attendee_id": "uuid-string",
+	  "activity_id": "uuid-string",
+	  "scanned_at": "timestamp",
+	  "status": "string",
+	  "scanned_by": "string"
 	}
-
-	if err := h.DB.CreateCheckInLog(&c); err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check in")
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(c)
-}
-
-/*
-CreateCheckIn2 checks if attendee already checked in before creating.
-
-Accepts same JSON as CreateCheckIn.
 
 Returns:
 - 201 Created with created check-in JSON on success
@@ -52,7 +28,7 @@ Returns:
 - 409 Conflict if already checked in for that attendee and activity
 - 500 Internal Server Error on DB failure
 */
-func (h *Handler) CreateCheckIn2(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 	var c models.CheckInLog
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
@@ -70,11 +46,13 @@ func (h *Handler) CreateCheckIn2(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.DB.CreateCheckInLog(&c); err != nil {
+		log.Println(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check in")
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(c)
 }
 
@@ -82,13 +60,14 @@ func (h *Handler) CreateCheckIn2(w http.ResponseWriter, r *http.Request) {
 ModifyCheckIn updates an existing check-in by ID.
 
 Accepts JSON:
-{
-  "attendee_id": "uuid-string",
-  "activity_id": "uuid-string",
-  "scanned_at": "timestamp",
-  "status": "string",
-  "scanned_by": "string"
-}
+
+	{
+	  "attendee_id": "uuid-string",
+	  "activity_id": "uuid-string",
+	  "scanned_at": "timestamp",
+	  "status": "string",
+	  "scanned_by": "string"
+	}
 
 Returns:
 - 200 OK with updated check-in JSON on success
@@ -122,6 +101,7 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(c)
 }
-

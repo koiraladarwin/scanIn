@@ -5,8 +5,8 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-// CreateEvent inserts a new event and returns its generated UUID
-func (p *PostgresDB) CreateEvent(e *models.Event) error {
+// CreateEventLq inserts a new event and returns its generated UUID
+func (p *PostgresDB) CreateEventLq(e *models.Event) error {
 	query := `INSERT INTO events (name, description, start_time, end_time, location) 
 			  VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	return p.sql.QueryRow(query, e.Name, e.Description, e.StartTime, e.EndTime, e.Location).Scan(&e.ID)
