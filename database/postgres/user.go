@@ -12,7 +12,7 @@ func (p *PostgresDB) CreateUser(u *models.User) error {
 	if isUniqueViolationError(err) {
 		return db.ErrAlreadyExists
 	}
-  return err
+	return err
 }
 
 func (p *PostgresDB) GetUser(id uuid.UUID) (*models.User, error) {
@@ -33,11 +33,11 @@ func (p *PostgresDB) DeleteUser(id uuid.UUID) error {
 	return err
 }
 
-func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.User, error) {
-	var users []models.User
+func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, error) {
+	var users []models.UserWithRole
 
 	rows, err := p.sql.Query(`
-		SELECT u.id, u.full_name, u.email, u.phone
+		SELECT u.id, u.full_name, u.email, u.phone, a.role
 		FROM attendees a
 		JOIN users u ON u.id = a.user_id
 		WHERE a.event_id = $1
@@ -48,8 +48,28 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.User, error) {
 	defer rows.Close()
 
 	for rows.Next() {
+		var u models.UserWithRole
+		if err := rows.Scan(&u.ID, &u.FullName, &u.Email, &u.Phone, &u.Role); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+
+	return users, nil
+}
+
+func (p *PostgresDB) GetAllUsers() ([]models.User, error) {
+	rows, err := p.sql.Query(`SELECT id, full_name, email, phone FROM users`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
 		var u models.User
-		if err := rows.Scan(&u.ID, &u.FullName, &u.Email, &u.Phone); err != nil {
+		err := rows.Scan(&u.ID, &u.FullName, &u.Email, &u.Phone)
+		if err != nil {
 			return nil, err
 		}
 		users = append(users, u)

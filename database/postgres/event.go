@@ -6,7 +6,7 @@ import (
 )
 
 // CreateEventLq inserts a new event and returns its generated UUID
-func (p *PostgresDB) CreateEventLq(e *models.Event) error {
+func (p *PostgresDB) CreateEvent(e *models.Event) error {
 	query := `INSERT INTO events (name, description, start_time, end_time, location) 
 			  VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	return p.sql.QueryRow(query, e.Name, e.Description, e.StartTime, e.EndTime, e.Location).Scan(&e.ID)
@@ -38,4 +38,29 @@ func (p *PostgresDB) EventExists(eventID uuid.UUID) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM events WHERE id = $1)`
 	err := p.sql.QueryRow(query, eventID).Scan(&exists)
 	return exists, err
+}
+
+func (p *PostgresDB) GetAllEvents() ([]models.Event, error) {
+    query := `SELECT id, name, description, start_time, end_time, location FROM events ORDER BY start_time`
+    
+    rows, err := p.sql.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var events []models.Event
+    for rows.Next() {
+        var e models.Event
+        if err := rows.Scan(&e.ID, &e.Name, &e.Description, &e.StartTime, &e.EndTime, &e.Location); err != nil {
+            return nil, err
+        }
+        events = append(events, e)
+    }
+    
+    if err = rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return events, nil
 }

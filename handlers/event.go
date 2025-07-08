@@ -29,13 +29,31 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-	if err := h.DB.CreateEventLq(&c); err != nil {
+	if err := h.DB.CreateEvent(&c); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create Event")
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(c)
+}
+
+/*
+GetEvent handles GET /api/v1/events
+
+Returns:
+- 200 OK with JSON array of all events
+- 500 Internal Server Error if DB query fails
+*/
+func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
+	events, err := h.DB.GetAllEvents()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(events)
 }
 
 

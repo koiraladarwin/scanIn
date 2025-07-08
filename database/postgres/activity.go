@@ -33,3 +33,23 @@ func (p *PostgresDB) DeleteActivity(id uuid.UUID) error {
 	return err
 }
 
+
+// GetActivities By event_id
+func (p *PostgresDB) GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity, error) {
+	activities := []models.Activity{}
+	query := `SELECT id, event_id, name, type, start_time, end_time FROM activities WHERE event_id = $1`
+	rows, err := p.sql.Query(query, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var a models.Activity
+		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime); err != nil {
+			return nil, err
+		}
+		activities = append(activities, a)
+	}
+	return activities, nil
+}

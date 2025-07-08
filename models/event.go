@@ -14,6 +14,14 @@ type User struct {
 	Phone    string    `json:"phone"`
 }
 
+type UserWithRole struct {
+	ID       uuid.UUID `json:"id"`
+	Role     string `json:"role"`
+	FullName string    `json:"full_name"`
+	Email    string    `json:"email"`
+	Phone    string    `json:"phone"`
+}
+
 // Event represents a specific event like "Teej 2025"
 type Event struct {
 	ID          uuid.UUID `json:"id"`
@@ -39,7 +47,7 @@ type Attendee struct {
 	ID      uuid.UUID `json:"id"`
 	UserID  uuid.UUID `json:"user_id"`  // FK to User
 	EventID uuid.UUID `json:"event_id"` // FK to Event
-	Role     string    `json:"role"` // "participant", "staff", "member"
+	Role    string    `json:"role"`     // "participant", "staff", "member"
 }
 
 // CheckInLog is created when an attendee scans at an activity
@@ -52,3 +60,7 @@ type CheckInLog struct {
 	ScannedBy  uuid.UUID `json:"scanned_by"` // FK to User (staff)
 }
 
+type EventWithActivities struct {
+	Event      Event      `json:"event"`
+	Activities []Activity `json:"activities"`
+}

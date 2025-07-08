@@ -57,3 +57,21 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(u)
 }
+
+/*
+GetAllUsers returns a list of all users.
+
+Returns:
+- 200 OK with JSON array of users on success
+- 500 Internal Server Error on DB failure
+*/
+func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	users, err := h.DB.GetAllUsers()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch users")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}

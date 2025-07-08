@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -80,6 +81,7 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	exists, err := h.DB.EventExists(eventID)
 	if err != nil {
+    log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "database error")
 		return
 	}
@@ -91,6 +93,7 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	attendees, err := h.DB.GetUsersByEvent(eventID)
 	if err != nil {
+    log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed to fetch attendees")
 		return
 	}

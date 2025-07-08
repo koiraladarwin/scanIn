@@ -8,21 +8,24 @@ import (
 type Database interface {
 	CreateUser(*models.User) error
 	GetUser(id uuid.UUID) (*models.User, error)
+	GetAllUsers() ([]models.User, error)
 	UpdateUser(*models.User) error
 	DeleteUser(id uuid.UUID) error
-	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
+	GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, error)
 
-	CreateEventLq(*models.Event) error
+	CreateEvent(*models.Event) error
 	GetEvent(id uuid.UUID) (*models.Event, error)
 	UpdateEvent(*models.Event) error
 	DeleteEvent(id uuid.UUID) error
-//GetEventsByAttendee(attendeeID uuid.UUID) ([]*models.Event, error)
+	//GetEventsByAttendee(attendeeID uuid.UUID) ([]*models.Event, error)
 	EventExists(eventID uuid.UUID) (bool, error)
+	GetAllEvents() ([]models.Event, error)
 
 	CreateActivity(*models.Activity) error
 	GetActivity(id uuid.UUID) (*models.Activity, error)
 	UpdateActivity(*models.Activity) error
 	DeleteActivity(id uuid.UUID) error
+	GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity, error)
 
 	CreateAttendee(*models.Attendee) error
 	GetAttendee(id uuid.UUID) (*models.Attendee, error)
@@ -38,5 +41,3 @@ type Database interface {
 
 	Close() error
 }
-
-
