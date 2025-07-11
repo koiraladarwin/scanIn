@@ -1,7 +1,10 @@
 package postgres
 
 import (
+	"database/sql"
+
 	"github.com/google/uuid"
+	db "github.com/koiraladarwin/scanin/database"
 	"github.com/koiraladarwin/scanin/models"
 )
 
@@ -20,6 +23,13 @@ func (p *PostgresDB) GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error) {
 	return c, err
 }
 
+func (p *PostgresDB) GetAllCheckInLog() (*models.CheckInLog, error) {
+	c := &models.CheckInLog{}
+	query := `SELECT id, attendee_id, activity_id, scanned_at, status, scanned_by FROM check_in_logs`
+	err := p.sql.QueryRow(query).Scan(&c.ID, &c.AttendeeID, &c.ActivityID, &c.ScannedAt, &c.Status, &c.ScannedBy)
+	return c, err
+}
+
 // UpdateCheckInLog updates an existing check-in log
 func (p *PostgresDB) UpdateCheckInLog(c *models.CheckInLog) error {
 	query := `UPDATE check_in_logs SET attendee_id=$1, activity_id=$2, scanned_at=$3, status=$4, scanned_by=$5 WHERE id=$6`
@@ -33,13 +43,18 @@ func (p *PostgresDB) DeleteCheckInLog(id uuid.UUID) error {
 	return err
 }
 
-// CheckInExists checks if a check-in already exists for given attendee and activity
-func (p *PostgresDB) CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (bool, error) {
-	var exists bool
-	query := `SELECT EXISTS (
-		SELECT 1 FROM check_in_logs WHERE attendee_id = $1 AND activity_id = $2
-	)`
-	err := p.sql.QueryRow(query, attendeeID, activityID).Scan(&exists)
-	return exists, err
-}
+func (p *PostgresDB) CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (uuid.UUID, error) {
+	var id uuid.UUID
+	query := `SELECT id FROM check_in_logs WHERE attendee_id = $1 AND activity_id = $2`
+	err := p.sql.QueryRow(query, attendeeID, activityID).Scan(&id)
 
+	if err == sql.ErrNoRows {
+		return uuid.Nil, db.ErrNotFound
+	}
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
+}

@@ -34,6 +34,7 @@ func main() {
 
 	api.HandleFunc("/attendees", handler.RegisterAttendee).Methods(constants.Post)
 
+	api.HandleFunc("/checkins", handler.GetCheckIn).Methods(constants.Get)
 	api.HandleFunc("/checkins", handler.CreateCheckIn).Methods(constants.Post)
 	api.HandleFunc("/checkins/{id}", handler.ModifyCheckIn).Methods(constants.Put)
 

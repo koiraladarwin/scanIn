@@ -16,7 +16,7 @@ type User struct {
 
 type UserWithRole struct {
 	ID       uuid.UUID `json:"id"`
-	Role     string `json:"role"`
+	Role     string    `json:"role"`
 	FullName string    `json:"full_name"`
 	Email    string    `json:"email"`
 	Phone    string    `json:"phone"`
@@ -58,6 +58,17 @@ type CheckInLog struct {
 	ScannedAt  time.Time `json:"scanned_at"`
 	Status     string    `json:"status"`     // e.g. "success", "duplicate", "invalid"
 	ScannedBy  uuid.UUID `json:"scanned_by"` // FK to User (staff)
+}
+
+type CheckInRespose struct {
+	ID         uuid.UUID `json:"id"`
+	FullName   string    `json:"full_name"`
+	AttendeeID uuid.UUID `json:"attendee_id"` // FK to Attendee
+	ActivityID uuid.UUID `json:"activity_id"` // FK to Activity
+	ScannedAt  time.Time `json:"scanned_at"`
+	Status     string    `json:"status"`     // e.g. "success", "duplicate", "invalid"
+	ScannedBy  uuid.UUID `json:"scanned_by"` // FK to User (staff)
+	ScannedByName  string `json:"scanned_by_name"` // FK to User (staff)
 }
 
 type EventWithActivities struct {

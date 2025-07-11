@@ -12,6 +12,7 @@ type Database interface {
 	UpdateUser(*models.User) error
 	DeleteUser(id uuid.UUID) error
 	GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, error)
+	GetUserByAttendeeid(Attendeeid uuid.UUID) (*models.User, error)
 
 	CreateEvent(*models.Event) error
 	GetEvent(id uuid.UUID) (*models.Event, error)
@@ -37,7 +38,8 @@ type Database interface {
 	GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error)
 	UpdateCheckInLog(*models.CheckInLog) error
 	DeleteCheckInLog(id uuid.UUID) error
-	CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (bool, error)
+	CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (uuid.UUID, error)
+	GetAllCheckInLog() (*models.CheckInLog, error)
 
 	Close() error
 }
