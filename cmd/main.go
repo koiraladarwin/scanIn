@@ -14,9 +14,11 @@ import (
 
 func main() {
 	port := "4000"
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+
+	if os.Getenv("RAILWAY_ENVIRONMENT_ID") == "" {
+		if err := godotenv.Load(); err != nil {
+			log.Println("⚠️  .env file not found, using environment variables instead")
+		}
 	}
 
 	connStr := os.Getenv("POSTGRESS_URL")
