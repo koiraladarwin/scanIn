@@ -39,7 +39,7 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-GetEvent handles GET /api/v1/events
+GetEvent handles GET 
 
 Returns:
 - 200 OK with JSON array of all events

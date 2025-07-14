@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	db "github.com/koiraladarwin/scanin/database"
+	"github.com/koiraladarwin/scanin/database"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
 )

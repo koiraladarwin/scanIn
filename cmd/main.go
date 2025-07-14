@@ -1,25 +1,33 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"os"
+
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/koiraladarwin/scanin/constants"
 	"github.com/koiraladarwin/scanin/database/postgres"
 	"github.com/koiraladarwin/scanin/handlers"
-	"log"
-	"net/http"
 )
 
 func main() {
 	port := "4000"
-	connStr := "postgres://postgres:mysecretpassword@localhost:5432/scanin?sslmode=disable"
-
-	db, err := postgres.ConnectPostgres(connStr)
+	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("could not connect to database:", err)
+		log.Fatal("Error loading .env file")
 	}
 
+	connStr := os.Getenv("POSTGRESS_URL")
+	if connStr == "" {
+		log.Fatal("DATABASE_URL not set in environment")
+	}
 	api := mux.NewRouter()
-
+	db, err := postgres.ConnectPostgres(connStr)
+	if err != nil {
+		log.Fatal("database count not be connected")
+	}
 	handler := handlers.New(db)
 
 	api.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
