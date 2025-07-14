@@ -82,7 +82,7 @@ func (p *PostgresDB) createTables() error {
 			activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
 			scanned_at TIMESTAMP NOT NULL DEFAULT now(),
 			status TEXT NOT NULL,
-			scanned_by UUID NOT NULL REFERENCES attendees(id) ON DELETE RESTRICT,
+			scanned_by TEXT NOT NULL ,
       UNIQUE (attendee_id, activity_id)
 		);`,
 	}

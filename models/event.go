@@ -58,7 +58,7 @@ type CheckInLog struct {
 	ActivityID uuid.UUID `json:"activity_id"` // FK to Activity
 	ScannedAt  time.Time `json:"scanned_at"`
 	Status     string    `json:"status"`     // e.g. "success", "duplicate", "invalid"
-	ScannedBy  uuid.UUID `json:"scanned_by"` // FK to User (staff)
+	ScannedBy  string `json:"scanned_by"` // FK to User (staff)
 }
 
 type CheckInRespose struct {
@@ -68,7 +68,7 @@ type CheckInRespose struct {
 	ActivityID    uuid.UUID `json:"activity_id"` // FK to Activity
 	ScannedAt     time.Time `json:"scanned_at"`
 	Status        string    `json:"status"`          // e.g. "success", "duplicate", "invalid"
-	ScannedBy     uuid.UUID `json:"scanned_by"`      // FK to User (staff)
+	ScannedBy     string `json:"scanned_by"`      // FK to User (staff)
 	ScannedByName string    `json:"scanned_by_name"` // FK to User (staff)
 }
 

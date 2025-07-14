@@ -117,7 +117,6 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scannedBy, err := h.DB.GetUserByAttendeeid(checkIn.ScannedBy)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusNotFound, "checkedIn in id not found")
 		return
@@ -138,7 +137,7 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 			Status:        checkIn.Status,
 			FullName:      user.FullName,
 			ScannedAt:     checkIn.ScannedAt,
-			ScannedByName: scannedBy.FullName,
+			ScannedByName: "Not Imeplemented Yet",
 			ScannedBy:     checkIn.ScannedBy,
 		}
 
@@ -163,7 +162,7 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 		Status:        checkIn.Status,
 		FullName:      user.FullName,
 		ScannedAt:     checkIn.ScannedAt,
-		ScannedByName: scannedBy.FullName,
+		ScannedByName: "not implememted yet",
 		ScannedBy:     checkIn.ScannedBy,
 	}
 
@@ -197,11 +196,6 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		scannedBy, err := h.DB.GetUserByAttendeeid(logItem.ScannedBy)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get scannedBy details")
-			return
-		}
 
 		resp := models.CheckInRespose{
 			ID:            logItem.ID,
@@ -211,7 +205,7 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 			ScannedAt:     logItem.ScannedAt,
 			ScannedBy:     logItem.ScannedBy,
 			Status:        logItem.Status,
-			ScannedByName: scannedBy.FullName,
+			ScannedByName: "not implemented yet",
 		}
 		responses = append(responses, resp)
 	}
