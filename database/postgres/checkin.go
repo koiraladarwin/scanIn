@@ -23,12 +23,33 @@ func (p *PostgresDB) GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error) {
 	return c, err
 }
 
-func (p *PostgresDB) GetAllCheckInLog() (*models.CheckInLog, error) {
-	c := &models.CheckInLog{}
-	query := `SELECT id, attendee_id, activity_id, scanned_at, status, scanned_by FROM check_in_logs`
-	err := p.sql.QueryRow(query).Scan(&c.ID, &c.AttendeeID, &c.ActivityID, &c.ScannedAt, &c.Status, &c.ScannedBy)
-	return c, err
+
+func (p *PostgresDB) GetAllCheckInLog() ([]models.CheckInLog, error) {
+    logs := []models.CheckInLog{}
+    query := `SELECT id, attendee_id, activity_id, scanned_at, status, scanned_by FROM check_in_logs`
+
+    rows, err := p.sql.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var log models.CheckInLog
+        err := rows.Scan(&log.ID, &log.AttendeeID, &log.ActivityID, &log.ScannedAt, &log.Status, &log.ScannedBy)
+        if err != nil {
+            return nil, err
+        }
+        logs = append(logs, log)
+    }
+
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return logs, nil
 }
+
 
 // UpdateCheckInLog updates an existing check-in log
 func (p *PostgresDB) UpdateCheckInLog(c *models.CheckInLog) error {

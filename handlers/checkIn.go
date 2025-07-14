@@ -105,22 +105,34 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var c models.CheckInLog
-	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+	checkIn, err := h.DB.GetCheckInLog(id)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusNotFound, "check in id not found")
 		return
 	}
 
-	c.ID = id
-
-	if err := h.DB.UpdateCheckInLog(&c); err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update")
+	if checkIn.Status == "checked" {
+		checkIn.Status = "unchecked"
+		err := h.DB.UpdateCheckInLog(checkIn)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(checkIn)
+		return
+	}
+	checkIn.Status = "checked"
+	err = h.DB.UpdateCheckInLog(checkIn)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(c)
+	json.NewEncoder(w).Encode(checkIn)
 }
 
 /*
@@ -132,38 +144,43 @@ Returns:
 */
 
 func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
-
 	checkInLogs, err := h.DB.GetAllCheckInLog()
 	if err != nil {
 		log.Print(err.Error())
-		utils.RespondWithError(w, http.StatusInternalServerError, "cant get checkinlogs")
+		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
 		return
 	}
 
-	user, err := h.DB.GetUserByAttendeeid(checkInLogs.AttendeeID)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "cant get user details")
-		return
+	var responses []models.CheckInRespose
+
+	for _, logItem := range checkInLogs {
+		user, err := h.DB.GetUserByAttendeeid(logItem.AttendeeID)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
+			return
+		}
+
+		scannedBy, err := h.DB.GetUserByAttendeeid(logItem.ScannedBy)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get scannedBy details")
+			return
+		}
+
+		resp := models.CheckInRespose{
+			ID:            logItem.ID,
+			FullName:      user.FullName,
+			AttendeeID:    logItem.AttendeeID,
+			ActivityID:    logItem.ActivityID,
+			ScannedAt:     logItem.ScannedAt,
+			ScannedBy:     logItem.ScannedBy,
+			Status:        logItem.Status,
+			ScannedByName: scannedBy.FullName,
+		}
+		responses = append(responses, resp)
 	}
 
-	scannedBy, err := h.DB.GetUserByAttendeeid(checkInLogs.ScannedBy)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "cant get user details")
-		return
-	}
-
-	checkInResponse := models.CheckInRespose{
-		ID:         checkInLogs.ID,
-		FullName:   user.FullName,
-		AttendeeID: checkInLogs.AttendeeID,
-		ActivityID: checkInLogs.ActivityID,
-		ScannedAt:  checkInLogs.ScannedAt,
-		ScannedBy:  checkInLogs.ScannedBy,
-		Status:     checkInLogs.Status,
-    ScannedByName: scannedBy.FullName,
-	}
-
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(checkInResponse)
+	json.NewEncoder(w).Encode(responses)
 }
+

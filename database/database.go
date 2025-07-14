@@ -39,7 +39,7 @@ type Database interface {
 	UpdateCheckInLog(*models.CheckInLog) error
 	DeleteCheckInLog(id uuid.UUID) error
 	CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (uuid.UUID, error)
-	GetAllCheckInLog() (*models.CheckInLog, error)
+	GetAllCheckInLog() ([]models.CheckInLog, error)
 
 	Close() error
 }
