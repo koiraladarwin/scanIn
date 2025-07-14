@@ -3,8 +3,10 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/jackc/pgconn"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/koiraladarwin/scanin/database"
-	"github.com/lib/pq"
 )
 
 type PostgresDB struct {
@@ -13,7 +15,7 @@ type PostgresDB struct {
 
 func ConnectPostgres(connStr string) (db.Database, error) {
 
-	db, err := sql.Open("postgres", connStr)
+	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -99,10 +101,9 @@ func isUniqueViolationError(err error) bool {
 	if err == nil {
 		return false
 	}
-	pqErr, ok := err.(*pq.Error)
+	pgErr, ok := err.(*pgconn.PgError)
 	if !ok {
 		return false
 	}
-	// "23505" is the PostgreSQL error code for unique violation
-	return pqErr.Code == "23505"
+	return pgErr.Code == "23505"
 }
