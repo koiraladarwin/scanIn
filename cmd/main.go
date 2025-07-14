@@ -26,7 +26,7 @@ func main() {
 		log.Fatal("DATABASE_URL not set in environment")
 	}
 	api := mux.NewRouter()
-	db, err := postgres.ConnectPostgres(connStr)
+  db, err := postgres.ConnectPostgres(connStr)
 	if err != nil {
 		log.Fatal("database count not be connected")
 	}
