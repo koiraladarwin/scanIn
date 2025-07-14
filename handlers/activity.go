@@ -67,7 +67,7 @@ func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 
 	event, err := h.DB.GetEvent(eventID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event")
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event"+err.Error())
 		return
 	}
 	if event == nil {
