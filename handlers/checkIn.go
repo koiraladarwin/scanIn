@@ -111,6 +111,18 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := h.DB.GetUserByAttendeeid(checkIn.AttendeeID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusNotFound, "user id not found")
+		return
+	}
+
+	scannedBy, err := h.DB.GetUserByAttendeeid(checkIn.ScannedBy)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusNotFound, "checkedIn in id not found")
+		return
+	}
+
 	if checkIn.Status == "checked" {
 		checkIn.Status = "unchecked"
 		err := h.DB.UpdateCheckInLog(checkIn)
@@ -118,21 +130,46 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 			return
 		}
+
+		checkInReponse := models.CheckInRespose{
+			ID:            checkIn.ID,
+			AttendeeID:    checkIn.AttendeeID,
+			ActivityID:    checkIn.ActivityID,
+			Status:        checkIn.Status,
+			FullName:      user.FullName,
+			ScannedAt:     checkIn.ScannedAt,
+			ScannedByName: scannedBy.FullName,
+			ScannedBy:     checkIn.ScannedBy,
+		}
+
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(checkIn)
+		json.NewEncoder(w).Encode(checkInReponse)
 		return
 	}
+
 	checkIn.Status = "checked"
 	err = h.DB.UpdateCheckInLog(checkIn)
+
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
 
+	checkInReponse := models.CheckInRespose{
+		ID:            checkIn.ID,
+		AttendeeID:    checkIn.AttendeeID,
+		ActivityID:    checkIn.ActivityID,
+		Status:        checkIn.Status,
+		FullName:      user.FullName,
+		ScannedAt:     checkIn.ScannedAt,
+		ScannedByName: scannedBy.FullName,
+		ScannedBy:     checkIn.ScannedBy,
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(checkIn)
+	json.NewEncoder(w).Encode(checkInReponse)
 }
 
 /*
@@ -183,4 +220,3 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(responses)
 }
-
