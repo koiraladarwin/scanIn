@@ -2,6 +2,7 @@ package firebaseauth
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
@@ -18,36 +19,50 @@ type FirebaseAuth struct {
 	AuthClient *auth.Client
 }
 
-func NewFirebaseAuth(ctx context.Context, serviceAccountKeyPath string) (*FirebaseAuth, error) {
-	if os.Getenv("RAILWAY_ENVIRONMENT_ID") == "" {
-		if err := godotenv.Load(); err != nil {
-			log.Println(".env file not found, using system env vars instead")
-		}
-	}
 
-	jsonCreds := os.Getenv("FIREBASE_CONFIG_JSON")
-	if jsonCreds == "" {
-		return nil, fmt.Errorf("FIREBASE_CONFIG_JSON env var not set")
-	}
+func NewFirebaseAuth(ctx context.Context) (*FirebaseAuth, error) {
+    // Load .env locally if not on Railway
+    if os.Getenv("RAILWAY_ENVIRONMENT_ID") == "" {
+        if err := godotenv.Load(); err != nil {
+            log.Println(".env file not found, using system env vars instead")
+        }
+    }
 
-	creds := []byte(jsonCreds)
-	opt := option.WithCredentialsJSON(creds)
+    var creds []byte
+    var err error
 
-	app, err := firebase.NewApp(ctx, nil, opt)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing firebase app: %w", err)
-	}
+    b64Creds := os.Getenv("FIREBASE_CONFIG_B64")
+    if b64Creds != "" {
+        creds, err = base64.StdEncoding.DecodeString(b64Creds)
+        if err != nil {
+            return nil, fmt.Errorf("failed to decode FIREBASE_CONFIG_B64: %w", err)
+        }
+    } else {
+        jsonCreds := os.Getenv("FIREBASE_CONFIG_JSON")
+        if jsonCreds == "" {
+            return nil, fmt.Errorf("no firebase credentials found in env vars")
+        }
+        creds = []byte(jsonCreds)
+    }
 
-	authClient, err := app.Auth(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting auth client: %w", err)
-	}
+    opt := option.WithCredentialsJSON(creds)
 
-	return &FirebaseAuth{
-		App:        app,
-		AuthClient: authClient,
-	}, nil
+    app, err := firebase.NewApp(ctx, nil, opt)
+    if err != nil {
+        return nil, fmt.Errorf("error initializing firebase app: %w", err)
+    }
+
+    authClient, err := app.Auth(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("error getting auth client: %w", err)
+    }
+
+    return &FirebaseAuth{
+        App:        app,
+        AuthClient: authClient,
+    }, nil
 }
+
 
 func (f *FirebaseAuth) verifyIDToken(ctx context.Context, idToken string) (*auth.Token, error) {
 	return f.AuthClient.VerifyIDToken(ctx, idToken)

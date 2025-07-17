@@ -23,7 +23,7 @@ func main() {
 		}
 	}
 
-	fbAuth, err := firebaseauth.NewFirebaseAuth(ctx, "ecms.json")
+	fbAuth, err := firebaseauth.NewFirebaseAuth(ctx)
 	if err != nil {
 		log.Fatal("firebase Auth could not be instatitated")
 	}
