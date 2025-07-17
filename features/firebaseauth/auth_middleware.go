@@ -38,13 +38,19 @@ func (f *FirebaseAuth) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if user.Email != "darwinkoirala123@gmail.com" {
+		allowed := map[string]bool{
+			"darwinkoirala123@gmail.com":    true,
+			"ocsbusinesssolution@gmail.com": true,
+			"chhetrinirmal765@gmail.com":    true,
+		}
+
+		if !allowed[user.Email] {
 			http.Error(w, "Unauthorized email", http.StatusUnauthorized)
 			return
+
 		}
 
 		ctx := context.WithValue(r.Context(), FirebaseUserContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
