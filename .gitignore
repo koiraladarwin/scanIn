@@ -1,3 +1,4 @@
 .env
 *.env
 .ecms
+ecms.json
