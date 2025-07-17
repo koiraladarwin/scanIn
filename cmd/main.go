@@ -39,6 +39,7 @@ func main() {
 	_ = api.NewRoute().Subrouter()
 	db, err := postgres.ConnectPostgres(connStr)
 	if err != nil {
+		log.Print(err.Error())
 		log.Fatal("database count not be connected")
 	}
 

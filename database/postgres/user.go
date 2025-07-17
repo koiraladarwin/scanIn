@@ -7,8 +7,8 @@ import (
 )
 
 func (p *PostgresDB) CreateUser(u *models.User) error {
-	query := `INSERT INTO users (full_name, email, phone) VALUES ($1, $2, $3) RETURNING id`
-	err := p.sql.QueryRow(query, u.FullName, u.Email, u.Phone).Scan(&u.ID)
+	query := `INSERT INTO users (full_name ,image_url, position, company) VALUES ($1, $2, $3, $4) RETURNING id`
+	err := p.sql.QueryRow(query, u.FullName, u.Image_url, u.Position, u.Company).Scan(&u.ID)
 	if isUniqueViolationError(err) {
 		return db.ErrAlreadyExists
 	}
@@ -17,8 +17,8 @@ func (p *PostgresDB) CreateUser(u *models.User) error {
 
 func (p *PostgresDB) GetUser(id uuid.UUID) (*models.User, error) {
 	u := &models.User{}
-	query := `SELECT id, full_name, email, phone FROM users WHERE id=$1`
-	err := p.sql.QueryRow(query, id).Scan(&u.ID, &u.FullName, &u.Email, &u.Phone)
+	query := `SELECT id, full_name, auto_id, image_url, position, company FROM users WHERE id=$1`
+	err := p.sql.QueryRow(query, id).Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Image_url, &u.Position, &u.Company)
 	return u, err
 }
 
@@ -29,27 +29,27 @@ func (p *PostgresDB) GetUserByAttendeeid(Attendeeid uuid.UUID) (*models.User, er
 	if err != nil {
 		return nil, err
 	}
-	query := `SELECT id, full_name, email, phone FROM users WHERE id=$1`
-	err = p.sql.QueryRow(query, a.UserID).Scan(&u.ID, &u.FullName, &u.Email, &u.Phone)
+	query := `SELECT id, full_name, auto_id, image_url, position, company FROM users WHERE id=$1`
+	err = p.sql.QueryRow(query, a.UserID).Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Image_url, &u.Position, &u.Company)
 	return u, err
 }
 
-func (p *PostgresDB) UpdateUser(u *models.User) error {
-	query := `UPDATE users SET full_name=$1, email=$2, phone=$3 WHERE id=$5`
-	_, err := p.sql.Exec(query, u.FullName, u.Email, u.Phone, u.ID)
-	return err
-}
-
-func (p *PostgresDB) DeleteUser(id uuid.UUID) error {
-	_, err := p.sql.Exec(`DELETE FROM users WHERE id=$1`, id)
-	return err
-}
+// func (p *PostgresDB) UpdateUser(u *models.User) error {
+// 	query := `UPDATE users SET full_name=$1, email=$2, phone=$3 WHERE id=$5`
+// 	_, err := p.sql.Exec(query, u.FullName, u.Email, u.Phone, u.ID)
+// 	return err
+// }
+//
+// func (p *PostgresDB) DeleteUser(id uuid.UUID) error {
+// 	_, err := p.sql.Exec(`DELETE FROM users WHERE id=$1`, id)
+// 	return err
+// }
 
 func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, error) {
 	var users []models.UserWithRole
 
 	rows, err := p.sql.Query(`
-		SELECT u.id, u.full_name, u.email, u.phone, a.role, a.id
+		SELECT u.id, u.full_name, u.auto_id, u.position, u.company, a.role, a.id
 		FROM attendees a
 		JOIN users u ON u.id = a.user_id
 		WHERE a.event_id = $1
@@ -61,7 +61,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 
 	for rows.Next() {
 		var u models.UserWithRole
-		if err := rows.Scan(&u.ID, &u.FullName, &u.Email, &u.Phone, &u.Role,&u.AttendeeId); err != nil {
+		if err := rows.Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Position, &u.Company,&u.Role, &u.AttendeeId); err != nil {
 			return nil, err
 		}
 		users = append(users, u)
@@ -71,7 +71,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 }
 
 func (p *PostgresDB) GetAllUsers() ([]models.User, error) {
-	rows, err := p.sql.Query(`SELECT id, full_name, email, phone FROM users`)
+	rows, err := p.sql.Query(`SELECT id, full_name, auto_id, image_url, position, company FROM users `)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (p *PostgresDB) GetAllUsers() ([]models.User, error) {
 	var users []models.User
 	for rows.Next() {
 		var u models.User
-		err := rows.Scan(&u.ID, &u.FullName, &u.Email, &u.Phone)
+		err := rows.Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Image_url, &u.Position, &u.Company)
 		if err != nil {
 			return nil, err
 		}

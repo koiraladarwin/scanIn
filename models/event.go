@@ -8,19 +8,23 @@ import (
 
 // User represents a registered person in the system
 type User struct {
-	ID       uuid.UUID `json:"id"`
-	FullName string    `json:"full_name"`
-	Email    string    `json:"email"`
-	Phone    string    `json:"phone"`
+	ID        uuid.UUID `json:"id"`
+	FullName  string    `json:"full_name"`
+	Company   string    `json:"company"`
+	Position  string    `json:"position"`
+	Image_url string    `json:"image_url"`
+	Auto_id   int    `json:"auto_id"`
 }
 
 type UserWithRole struct {
-	AttendeeId uuid.UUID `json:"attendee_id"`
 	ID         uuid.UUID `json:"id"`
-	Role       string    `json:"role"`
+	AttendeeId uuid.UUID `json:"attendee_id"`
+	Auto_id    string    `json:"auto_id"`
 	FullName   string    `json:"full_name"`
-	Email      string    `json:"email"`
-	Phone      string    `json:"phone"`
+	Company    string    `json:"company"`
+	Position   string    `json:"position"`
+	Image_url  string    `json:"image_url"`
+	Role       string    `json:"role"`
 }
 
 // Event represents a specific event like "Teej 2025"
@@ -58,7 +62,7 @@ type CheckInLog struct {
 	ActivityID uuid.UUID `json:"activity_id"` // FK to Activity
 	ScannedAt  time.Time `json:"scanned_at"`
 	Status     string    `json:"status"`     // e.g. "success", "duplicate", "invalid"
-	ScannedBy  string `json:"scanned_by"` // FK to User (staff)
+	ScannedBy  string    `json:"scanned_by"` // FK to User (staff)
 }
 
 type CheckInRespose struct {
@@ -68,7 +72,7 @@ type CheckInRespose struct {
 	ActivityID    uuid.UUID `json:"activity_id"` // FK to Activity
 	ScannedAt     time.Time `json:"scanned_at"`
 	Status        string    `json:"status"`          // e.g. "success", "duplicate", "invalid"
-	ScannedBy     string `json:"scanned_by"`      // FK to User (staff)
+	ScannedBy     string    `json:"scanned_by"`      // FK to User (staff)
 	ScannedByName string    `json:"scanned_by_name"` // FK to User (staff)
 }
 

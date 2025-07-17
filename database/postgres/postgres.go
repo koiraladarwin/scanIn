@@ -39,6 +39,7 @@ func (p *PostgresDB) createTables() error {
 
 		`CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      auto_id SERIAL UNIQUE,
 			full_name TEXT NOT NULL,
       image_url TEXT NOT NULL,
 			company TEXT NOT NULL,
@@ -67,7 +68,7 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-			role TEXT NOT NULL CHECK (role IN ('participant', 'staff', 'member')),
+			role TEXT NOT NULL,
       UNIQUE (user_id, event_id)
 		);`, //attendees are users in a event
 

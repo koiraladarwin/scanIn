@@ -9,8 +9,8 @@ type Database interface {
 	CreateUser(*models.User) error
 	GetUser(id uuid.UUID) (*models.User, error)
 	GetAllUsers() ([]models.User, error)
-	UpdateUser(*models.User) error
-	DeleteUser(id uuid.UUID) error
+	//UpdateUser(*models.User) error
+	//DeleteUser(id uuid.UUID) error
 	GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, error)
 	GetUserByAttendeeid(Attendeeid uuid.UUID) (*models.User, error)
 

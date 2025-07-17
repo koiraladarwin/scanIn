@@ -34,7 +34,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if u.Email == "" || u.FullName == "" || u.Phone == "" {
+	if u.Image_url == "" || u.FullName == "" || u.Position == "" || u.Company == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
