@@ -73,7 +73,6 @@ type CheckInRespose struct {
 	ScannedAt     time.Time `json:"scanned_at"`
 	Status        string    `json:"status"`          // e.g. "success", "duplicate", "invalid"
 	ScannedBy     string    `json:"scanned_by"`      // FK to User (staff)
-	ScannedByName string    `json:"scanned_by_name"` // FK to User (staff)
 }
 
 type EventWithActivities struct {

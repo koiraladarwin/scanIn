@@ -84,6 +84,7 @@ func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.Status = "checked"
+  user.ScannedBy = fbuser.Email
 	err = h.DB.UpdateCheckInLog(user)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -154,7 +155,6 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 			Status:        checkIn.Status,
 			FullName:      user.FullName,
 			ScannedAt:     checkIn.ScannedAt,
-			ScannedByName: "Not Imeplemented Yet",
 			ScannedBy:     checkIn.ScannedBy,
 		}
 
@@ -179,7 +179,6 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 		Status:        checkIn.Status,
 		FullName:      user.FullName,
 		ScannedAt:     checkIn.ScannedAt,
-		ScannedByName: "not implememted yet",
 		ScannedBy:     checkIn.ScannedBy,
 	}
 
@@ -221,7 +220,6 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 			ScannedAt:     logItem.ScannedAt,
 			ScannedBy:     logItem.ScannedBy,
 			Status:        logItem.Status,
-			ScannedByName: "not implemented yet",
 		}
 		responses = append(responses, resp)
 	}
