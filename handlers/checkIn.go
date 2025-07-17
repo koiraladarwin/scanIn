@@ -5,10 +5,13 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
+	"firebase.google.com/go/auth"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/koiraladarwin/scanin/database"
+	"github.com/koiraladarwin/scanin/features/firebaseauth"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
 )
@@ -31,7 +34,19 @@ Returns:
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
+	userVal := r.Context().Value(firebaseauth.FirebaseUserContextKey)
+	if userVal == nil {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
+	fbuser, ok := userVal.(*auth.UserRecord)
+	if !ok {
+		http.Error(w, "Context value is not of type *auth.UserRecord", http.StatusInternalServerError)
+		return
+	}
 	var c models.CheckInLog
+
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
@@ -39,6 +54,8 @@ func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.DB.CheckInExists(c.AttendeeID, c.ActivityID)
 	if errors.Is(err, db.ErrNotFound) {
+    c.ScannedBy = fbuser.Email
+    c.ScannedAt = time.Now()
 		err := h.DB.CreateCheckInLog(&c)
 		if err != nil {
 			log.Print(err.Error())
@@ -195,7 +212,6 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
 			return
 		}
-
 
 		resp := models.CheckInRespose{
 			ID:            logItem.ID,

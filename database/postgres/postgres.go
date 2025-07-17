@@ -40,8 +40,9 @@ func (p *PostgresDB) createTables() error {
 		`CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			full_name TEXT NOT NULL,
-			email TEXT UNIQUE NOT NULL,
-			phone TEXT
+      image_url TEXT NOT NULL,
+			company TEXT NOT NULL,
+			position TEXT NOT NULL
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS events (
