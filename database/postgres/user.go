@@ -49,7 +49,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 	var users []models.UserWithRole
 
 	rows, err := p.sql.Query(`
-		SELECT u.id, u.full_name, u.auto_id, u.position, u.company, a.role, a.id
+		SELECT u.id, u.full_name, u.auto_id, u.position, u.company,u.image_url, a.role, a.id
 		FROM attendees a
 		JOIN users u ON u.id = a.user_id
 		WHERE a.event_id = $1
@@ -61,7 +61,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 
 	for rows.Next() {
 		var u models.UserWithRole
-		if err := rows.Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Position, &u.Company,&u.Role, &u.AttendeeId); err != nil {
+		if err := rows.Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Position, &u.Company,&u.Image_url, &u.Role, &u.AttendeeId); err != nil {
 			return nil, err
 		}
 		users = append(users, u)

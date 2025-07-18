@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/koiraladarwin/scanin/features/firebaseauth"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
+	"github.com/xuri/excelize/v2"
 )
 
 /*
@@ -54,8 +56,8 @@ func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.DB.CheckInExists(c.AttendeeID, c.ActivityID)
 	if errors.Is(err, db.ErrNotFound) {
-    c.ScannedBy = fbuser.Email
-    c.ScannedAt = time.Now()
+		c.ScannedBy = fbuser.Email
+		c.ScannedAt = time.Now()
 		err := h.DB.CreateCheckInLog(&c)
 		if err != nil {
 			log.Print(err.Error())
@@ -84,7 +86,7 @@ func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.Status = "checked"
-  user.ScannedBy = fbuser.Email
+	user.ScannedBy = fbuser.Email
 	err = h.DB.UpdateCheckInLog(user)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -149,13 +151,13 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 		}
 
 		checkInReponse := models.CheckInRespose{
-			ID:            checkIn.ID,
-			AttendeeID:    checkIn.AttendeeID,
-			ActivityID:    checkIn.ActivityID,
-			Status:        checkIn.Status,
-			FullName:      user.FullName,
-			ScannedAt:     checkIn.ScannedAt,
-			ScannedBy:     checkIn.ScannedBy,
+			ID:         checkIn.ID,
+			AttendeeID: checkIn.AttendeeID,
+			ActivityID: checkIn.ActivityID,
+			Status:     checkIn.Status,
+			FullName:   user.FullName,
+			ScannedAt:  checkIn.ScannedAt,
+			ScannedBy:  checkIn.ScannedBy,
 		}
 
 		w.WriteHeader(http.StatusCreated)
@@ -173,13 +175,13 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	checkInReponse := models.CheckInRespose{
-		ID:            checkIn.ID,
-		AttendeeID:    checkIn.AttendeeID,
-		ActivityID:    checkIn.ActivityID,
-		Status:        checkIn.Status,
-		FullName:      user.FullName,
-		ScannedAt:     checkIn.ScannedAt,
-		ScannedBy:     checkIn.ScannedBy,
+		ID:         checkIn.ID,
+		AttendeeID: checkIn.AttendeeID,
+		ActivityID: checkIn.ActivityID,
+		Status:     checkIn.Status,
+		FullName:   user.FullName,
+		ScannedAt:  checkIn.ScannedAt,
+		ScannedBy:  checkIn.ScannedBy,
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -213,13 +215,13 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 		}
 
 		resp := models.CheckInRespose{
-			ID:            logItem.ID,
-			FullName:      user.FullName,
-			AttendeeID:    logItem.AttendeeID,
-			ActivityID:    logItem.ActivityID,
-			ScannedAt:     logItem.ScannedAt,
-			ScannedBy:     logItem.ScannedBy,
-			Status:        logItem.Status,
+			ID:         logItem.ID,
+			FullName:   user.FullName,
+			AttendeeID: logItem.AttendeeID,
+			ActivityID: logItem.ActivityID,
+			ScannedAt:  logItem.ScannedAt,
+			ScannedBy:  logItem.ScannedBy,
+			Status:     logItem.Status,
 		}
 		responses = append(responses, resp)
 	}
@@ -227,4 +229,76 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(responses)
+}
+
+/*
+Export CheckIn , retrives all check Ins
+
+Returns:
+- 200 OK with updated check-in JSON on success
+- 500 Internal Server Error on DB failure
+*/
+func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	if idStr == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Missing ID")
+		return
+	}
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
+		return
+	}
+
+	checkInLogs, err := h.DB.GetAllCheckInOfEvents(id)
+	if err != nil {
+		log.Print(err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
+		return
+	}
+
+	f := excelize.NewFile()
+	sheet := "CheckIns"
+	f.SetSheetName("Sheet1", sheet)
+
+	headers := []string{"ID", "Full Name", "Activity ", "Scanned At", "Scanned By", "Status"}
+	for i, header := range headers {
+		cell := fmt.Sprintf("%c1", 'A'+i)
+		f.SetCellValue(sheet, cell, header)
+	}
+
+	for i, logItem := range checkInLogs {
+		user, err := h.DB.GetUserByAttendeeid(logItem.AttendeeID)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
+			return
+		}
+		activity, err := h.DB.GetActivity(logItem.ActivityID)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
+			return
+		}
+
+		rowNum := i + 2 // excel rows start at 1 and row 1 is the header so manually +2
+
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", rowNum), user.Auto_id)
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", rowNum), user.FullName)
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", rowNum), activity.Name)
+		f.SetCellValue(sheet, fmt.Sprintf("D%d", rowNum), logItem.ScannedAt.Format(time.RFC3339))
+		f.SetCellValue(sheet, fmt.Sprintf("E%d", rowNum), logItem.ScannedBy)
+		f.SetCellValue(sheet, fmt.Sprintf("F%d", rowNum), logItem.Status)
+	}
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", `attachment; filename="checkins.xlsx"`)
+	w.WriteHeader(http.StatusOK)
+
+	err = f.Write(w)
+	if err != nil {
+		log.Printf("Error writing Excel file: %v", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to write Excel file")
+	}
+
 }

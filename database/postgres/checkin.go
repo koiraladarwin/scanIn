@@ -79,3 +79,46 @@ func (p *PostgresDB) CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (
 
 	return id, nil
 }
+
+
+func (p *PostgresDB) GetAllCheckInOfEvents(eventID uuid.UUID) ([]models.CheckInLog, error) {
+	var checkIns []models.CheckInLog
+
+	queryActivities := `SELECT id FROM activities WHERE event_id = $1`
+	rows, err := p.sql.Query(queryActivities, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var activityID uuid.UUID
+		if err := rows.Scan(&activityID); err != nil {
+			return nil, err
+		}
+
+		queryCheckIn := `SELECT id, attendee_id, activity_id, scanned_at, status, scanned_by FROM check_in_logs WHERE activity_id = $1`
+		activityRows, err := p.sql.Query(queryCheckIn, activityID)
+		if err != nil {
+			return nil, err
+		}
+
+		for activityRows.Next() {
+			var checkIn models.CheckInLog
+			if err := activityRows.Scan(&checkIn.ID, &checkIn.AttendeeID, &checkIn.ActivityID, &checkIn.ScannedAt, &checkIn.Status, &checkIn.ScannedBy); err != nil {
+				activityRows.Close()
+				return nil, err
+			}
+			checkIns = append(checkIns, checkIn)
+		}
+		activityRows.Close()
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return checkIns, nil
+}
+
+

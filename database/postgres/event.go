@@ -32,6 +32,7 @@ func (p *PostgresDB) DeleteEvent(id uuid.UUID) error {
 	_, err := p.sql.Exec(`DELETE FROM events WHERE id=$1`, id)
 	return err
 }
+
 // Checks if Event Id exists in The table
 func (p *PostgresDB) EventExists(eventID uuid.UUID) (bool, error) {
 	var exists bool
@@ -40,27 +41,28 @@ func (p *PostgresDB) EventExists(eventID uuid.UUID) (bool, error) {
 	return exists, err
 }
 
+//gets all events
 func (p *PostgresDB) GetAllEvents() ([]models.Event, error) {
-    query := `SELECT id, name, description, start_time, end_time, location FROM events ORDER BY start_time`
-    
-    rows, err := p.sql.Query(query)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	query := `SELECT id, name, description, start_time, end_time, location FROM events ORDER BY start_time`
 
-    var events []models.Event
-    for rows.Next() {
-        var e models.Event
-        if err := rows.Scan(&e.ID, &e.Name, &e.Description, &e.StartTime, &e.EndTime, &e.Location); err != nil {
-            return nil, err
-        }
-        events = append(events, e)
-    }
-    
-    if err = rows.Err(); err != nil {
-        return nil, err
-    }
+	rows, err := p.sql.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    return events, nil
+	var events []models.Event
+	for rows.Next() {
+		var e models.Event
+		if err := rows.Scan(&e.ID, &e.Name, &e.Description, &e.StartTime, &e.EndTime, &e.Location); err != nil {
+			return nil, err
+		}
+		events = append(events, e)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return events, nil
 }
