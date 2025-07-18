@@ -41,11 +41,6 @@ func (h *Handler) RegisterAttendee(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if a.Role != "participant" && a.Role != "staff" && a.Role != "member" {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-		return
-	}
-
 	err := h.DB.CreateAttendee(&a)
 	if err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {

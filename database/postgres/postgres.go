@@ -37,13 +37,15 @@ func (p *PostgresDB) createTables() error {
 	stmts := []string{
 		`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`, // enables gen_random_uuid() in postgress sometimes it may not be active
 
-		`CREATE TABLE IF NOT EXISTS users (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      auto_id SERIAL UNIQUE,
-			full_name TEXT NOT NULL,
-      image_url TEXT NOT NULL,
-			company TEXT NOT NULL,
-			position TEXT NOT NULL
+		`create table if not exists users (
+			id uuid primary key default gen_random_uuid(),
+      auto_id int not null,
+			full_name text not null,
+      image_url text not null,
+			company text not null,
+			position text not null,
+			role text not null,
+      unique(role,auto_id)
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS events (
@@ -68,7 +70,6 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-			role TEXT NOT NULL,
       UNIQUE (user_id, event_id)
 		);`, //attendees are users in a event
 

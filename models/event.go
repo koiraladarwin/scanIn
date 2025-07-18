@@ -13,7 +13,8 @@ type User struct {
 	Company   string    `json:"company"`
 	Position  string    `json:"position"`
 	Image_url string    `json:"image_url"`
-	Auto_id   int    `json:"auto_id"`
+	AutoId   int       `json:"auto_id"`
+	Role      string    `json:"role"` // "participant", "staff", "member"
 }
 
 type UserWithRole struct {
@@ -52,7 +53,6 @@ type Attendee struct {
 	ID      uuid.UUID `json:"id"`
 	UserID  uuid.UUID `json:"user_id"`  // FK to User
 	EventID uuid.UUID `json:"event_id"` // FK to Event
-	Role    string    `json:"role"`     // "participant", "staff", "member"
 }
 
 // CheckInLog is created when an attendee scans at an activity
@@ -66,13 +66,13 @@ type CheckInLog struct {
 }
 
 type CheckInRespose struct {
-	ID            uuid.UUID `json:"id"`
-	FullName      string    `json:"full_name"`
-	AttendeeID    uuid.UUID `json:"attendee_id"` // FK to Attendee
-	ActivityID    uuid.UUID `json:"activity_id"` // FK to Activity
-	ScannedAt     time.Time `json:"scanned_at"`
-	Status        string    `json:"status"`          // e.g. "success", "duplicate", "invalid"
-	ScannedBy     string    `json:"scanned_by"`      // FK to User (staff)
+	ID         uuid.UUID `json:"id"`
+	FullName   string    `json:"full_name"`
+	AttendeeID uuid.UUID `json:"attendee_id"` // FK to Attendee
+	ActivityID uuid.UUID `json:"activity_id"` // FK to Activity
+	ScannedAt  time.Time `json:"scanned_at"`
+	Status     string    `json:"status"`     // e.g. "success", "duplicate", "invalid"
+	ScannedBy  string    `json:"scanned_by"` // FK to User (staff)
 }
 
 type EventWithActivities struct {

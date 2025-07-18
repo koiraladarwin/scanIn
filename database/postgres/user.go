@@ -1,24 +1,51 @@
 package postgres
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/koiraladarwin/scanin/database"
 	"github.com/koiraladarwin/scanin/models"
 )
 
 func (p *PostgresDB) CreateUser(u *models.User) error {
-	query := `INSERT INTO users (full_name ,image_url, position, company) VALUES ($1, $2, $3, $4) RETURNING id`
-	err := p.sql.QueryRow(query, u.FullName, u.Image_url, u.Position, u.Company).Scan(&u.ID)
+	// Step 1: Get the current max auto_id for the given role
+	var lastAutoID int
+	err := p.sql.QueryRow(`SELECT COALESCE(MAX(auto_id), 0) FROM users WHERE role = $1`, u.Role).Scan(&lastAutoID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch latest auto_id: %w", err)
+	}
+
+	// Step 2: Set the next auto_id
+	u.AutoId = lastAutoID + 1
+
+	// Step 3: Insert the new user
+	query := `
+		INSERT INTO users (auto_id, full_name, image_url, position, company, role)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`
+	err = p.sql.QueryRow(
+		query,
+		u.AutoId,
+		u.FullName,
+		u.Image_url,
+		u.Position,
+		u.Company,
+		u.Role,
+	).Scan(&u.ID)
+
 	if isUniqueViolationError(err) {
 		return db.ErrAlreadyExists
 	}
+
 	return err
 }
 
 func (p *PostgresDB) GetUser(id uuid.UUID) (*models.User, error) {
 	u := &models.User{}
-	query := `SELECT id, full_name, auto_id, image_url, position, company FROM users WHERE id=$1`
-	err := p.sql.QueryRow(query, id).Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Image_url, &u.Position, &u.Company)
+	query := `SELECT id, full_name, auto_id, image_url, position, company ,role FROM users WHERE id=$1`
+	err := p.sql.QueryRow(query, id).Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role)
 	return u, err
 }
 
@@ -29,8 +56,8 @@ func (p *PostgresDB) GetUserByAttendeeid(Attendeeid uuid.UUID) (*models.User, er
 	if err != nil {
 		return nil, err
 	}
-	query := `SELECT id, full_name, auto_id, image_url, position, company FROM users WHERE id=$1`
-	err = p.sql.QueryRow(query, a.UserID).Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Image_url, &u.Position, &u.Company)
+	query := `SELECT id, full_name, auto_id, image_url, position, company,role FROM users WHERE id=$1`
+	err = p.sql.QueryRow(query, a.UserID).Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role)
 	return u, err
 }
 
@@ -49,7 +76,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 	var users []models.UserWithRole
 
 	rows, err := p.sql.Query(`
-		SELECT u.id, u.full_name, u.auto_id, u.position, u.company,u.image_url, a.role, a.id
+		SELECT u.id, u.full_name, u.auto_id, u.position, u.company,u.image_url, u.role, a.id
 		FROM attendees a
 		JOIN users u ON u.id = a.user_id
 		WHERE a.event_id = $1
@@ -61,7 +88,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 
 	for rows.Next() {
 		var u models.UserWithRole
-		if err := rows.Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Position, &u.Company,&u.Image_url, &u.Role, &u.AttendeeId); err != nil {
+		if err := rows.Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Position, &u.Company, &u.Image_url, &u.Role, &u.AttendeeId); err != nil {
 			return nil, err
 		}
 		users = append(users, u)
@@ -71,7 +98,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 }
 
 func (p *PostgresDB) GetAllUsers() ([]models.User, error) {
-	rows, err := p.sql.Query(`SELECT id, full_name, auto_id, image_url, position, company FROM users `)
+	rows, err := p.sql.Query(`SELECT id, full_name, auto_id, image_url, position, company,role FROM users `)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +107,7 @@ func (p *PostgresDB) GetAllUsers() ([]models.User, error) {
 	var users []models.User
 	for rows.Next() {
 		var u models.User
-		err := rows.Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Image_url, &u.Position, &u.Company)
+		err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role)
 		if err != nil {
 			return nil, err
 		}

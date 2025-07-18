@@ -240,7 +240,7 @@ Returns:
 */
 func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	idStr := vars["id"]
+	idStr := vars["event_id"]
 	if idStr == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing ID")
 		return
@@ -283,7 +283,7 @@ func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 
 		rowNum := i + 2 // excel rows start at 1 and row 1 is the header so manually +2
 
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", rowNum), user.Auto_id)
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", rowNum), user.AutoId)
 		f.SetCellValue(sheet, fmt.Sprintf("B%d", rowNum), user.FullName)
 		f.SetCellValue(sheet, fmt.Sprintf("C%d", rowNum), activity.Name)
 		f.SetCellValue(sheet, fmt.Sprintf("D%d", rowNum), logItem.ScannedAt.Format(time.RFC3339))

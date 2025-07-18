@@ -62,7 +62,7 @@ func main() {
 	api.HandleFunc("/checkins", handler.GetCheckIn).Methods(constants.Get)
 	api.HandleFunc("/checkins", handler.CreateCheckIn).Methods(constants.Post)
 	api.HandleFunc("/checkins/{id}", handler.ModifyCheckIn).Methods(constants.Put)
-	api.HandleFunc("/exportcheckins/{id}", handler.ExportCheckIn).Methods(constants.Get)
+	api.HandleFunc("/exportcheckins/{event_id}", handler.ExportCheckIn).Methods(constants.Get)
 
 	log.Printf("Server running on port %s", port)
 
