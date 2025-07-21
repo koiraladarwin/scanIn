@@ -302,3 +302,57 @@ func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+/*
+GetCheckInById , retrives all check Ins
+
+Returns:
+- 200 OK with updated check-in JSON on success
+- 500 Internal Server Error on DB failure
+*/
+
+func (h *Handler) GetCheckInById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	if idStr == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Missing ID")
+		return
+	}
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
+		return
+	}
+
+	checkInLogs, err := h.DB.GetAllCheckInOfEvents(id)
+	if err != nil {
+		log.Print(err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
+		return
+	}
+
+	var responses []models.CheckInRespose
+
+	for _, logItem := range checkInLogs {
+		user, err := h.DB.GetUserByAttendeeid(logItem.AttendeeID)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
+			return
+		}
+
+		resp := models.CheckInRespose{
+			ID:         logItem.ID,
+			FullName:   user.FullName,
+			AttendeeID: logItem.AttendeeID,
+			ActivityID: logItem.ActivityID,
+			ScannedAt:  logItem.ScannedAt,
+			ScannedBy:  logItem.ScannedBy,
+			Status:     logItem.Status,
+		}
+		responses = append(responses, resp)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(responses)
+}
