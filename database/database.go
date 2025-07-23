@@ -6,7 +6,7 @@ import (
 )
 
 type Database interface {
-	CreateUser(*models.User) error
+	CreateUser(*models.User) (*models.User, error)
 	GetUser(id uuid.UUID) (*models.User, error)
 	GetAllUsers() ([]models.User, error)
 	//UpdateUser(*models.User) error
@@ -28,7 +28,7 @@ type Database interface {
 	DeleteActivity(id uuid.UUID) error
 	GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity, error)
 
-	CreateAttendee(*models.Attendee) error
+	CreateAttendee(*models.Attendee) (*models.Attendee, error)
 	GetAttendee(id uuid.UUID) (*models.Attendee, error)
 	UpdateAttendee(*models.Attendee) error
 	DeleteAttendee(id uuid.UUID) error

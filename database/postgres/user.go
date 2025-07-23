@@ -8,18 +8,15 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-func (p *PostgresDB) CreateUser(u *models.User) error {
-	// Step 1: Get the current max auto_id for the given role
+func (p *PostgresDB) CreateUser(u *models.User) (*models.User,error) {
 	var lastAutoID int
 	err := p.sql.QueryRow(`SELECT COALESCE(MAX(auto_id), 0) FROM users WHERE role = $1`, u.Role).Scan(&lastAutoID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch latest auto_id: %w", err)
+		return nil,fmt.Errorf("failed to fetch latest auto_id: %w", err)
 	}
 
-	// Step 2: Set the next auto_id
 	u.AutoId = lastAutoID + 1
 
-	// Step 3: Insert the new user
 	query := `
 		INSERT INTO users (auto_id, full_name, image_url, position, company, role)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -36,10 +33,10 @@ func (p *PostgresDB) CreateUser(u *models.User) error {
 	).Scan(&u.ID)
 
 	if isUniqueViolationError(err) {
-		return db.ErrAlreadyExists
+		return nil,db.ErrAlreadyExists
 	}
 
-	return err
+	return u,err
 }
 
 func (p *PostgresDB) GetUser(id uuid.UUID) (*models.User, error) {
@@ -88,7 +85,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 
 	for rows.Next() {
 		var u models.UserWithRole
-		if err := rows.Scan(&u.ID, &u.FullName, &u.Auto_id, &u.Position, &u.Company, &u.Image_url, &u.Role, &u.AttendeeId); err != nil {
+		if err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Position, &u.Company, &u.Image_url, &u.Role, &u.AttendeeId); err != nil {
 			return nil, err
 		}
 		users = append(users, u)

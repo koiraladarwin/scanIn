@@ -7,17 +7,17 @@ import (
 )
 
 // CreateAttendee inserts a new attendee and returns the generated UUID
-func (p *PostgresDB) CreateAttendee(a *models.Attendee) error {
+func (p *PostgresDB) CreateAttendee(a *models.Attendee) (*models.Attendee, error) {
 	query := `INSERT INTO attendees (user_id, event_id) VALUES ($1, $2) RETURNING id`
 
 	err := p.sql.QueryRow(query, a.UserID, a.EventID).Scan(&a.ID)
 	if err != nil {
 		if isUniqueViolationError(err) {
-			return db.ErrAlreadyExists
+			return nil,db.ErrAlreadyExists
 		}
-		return err
+		return nil,err
 	}
-	return nil
+	return a,nil
 }
 
 // GetAttendee fetches an attendee by UUID

@@ -19,7 +19,7 @@ func FbUserFromContext(ctx context.Context) *auth.UserRecord {
 
 func (f *FirebaseAuth) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-  
+
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			http.Error(w, "Missing Authorization header", http.StatusUnauthorized)

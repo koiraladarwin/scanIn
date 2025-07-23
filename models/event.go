@@ -13,17 +13,26 @@ type User struct {
 	Company   string    `json:"company"`
 	Position  string    `json:"position"`
 	Image_url string    `json:"image_url"`
-	AutoId   int       `json:"auto_id"`
+	AutoId    int       `json:"auto_id"`
 	Role      string    `json:"role"` // "participant", "staff", "member"
+}
+
+// User represents a registered person in the system
+type UserRequest struct {
+	FullName  string    `json:"full_name"`
+	Company   string    `json:"company"`
+	Position  string    `json:"position"`
+	Image_url string    `json:"image_url"`
+	Role      string    `json:"role"`     // "participant", "staff", "member"
 }
 
 type UserWithRole struct {
 	ID         uuid.UUID `json:"id"`
 	AttendeeId uuid.UUID `json:"attendee_id"`
-	Auto_id    string    `json:"auto_id"`
 	FullName   string    `json:"full_name"`
 	Company    string    `json:"company"`
 	Position   string    `json:"position"`
+	AutoId     int       `json:"auto_id"`
 	Image_url  string    `json:"image_url"`
 	Role       string    `json:"role"`
 }

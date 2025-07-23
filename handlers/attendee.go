@@ -41,7 +41,7 @@ func (h *Handler) RegisterAttendee(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.DB.CreateAttendee(&a)
+	att, err := h.DB.CreateAttendee(&a)
 	if err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
 			utils.RespondWithError(w, http.StatusConflict, "Attendee already registered")
@@ -53,7 +53,7 @@ func (h *Handler) RegisterAttendee(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(a)
+	json.NewEncoder(w).Encode(att)
 }
 
 /*
@@ -76,7 +76,7 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	exists, err := h.DB.EventExists(eventID)
 	if err != nil {
-    log.Print(err.Error())
+		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "database error")
 		return
 	}
@@ -88,7 +88,7 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	attendees, err := h.DB.GetUsersByEvent(eventID)
 	if err != nil {
-    log.Print(err.Error())
+		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed to fetch attendees")
 		return
 	}
