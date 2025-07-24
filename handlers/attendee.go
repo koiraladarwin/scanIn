@@ -5,10 +5,11 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/koiraladarwin/scanin/database"
+	db "github.com/koiraladarwin/scanin/database"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
 )
@@ -95,4 +96,39 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(attendees)
+}
+
+/*
+GetUsersByAttendeId
+Fetches list of attendees for given event ID (UUID in URL path param).
+
+Returns:
+- 200 OK with JSON array of attendees
+- 400 Bad Request if event ID is not a valid UUID
+- 404 Not Found if event does not exist
+- 500 Internal Server Error on database errors
+*/
+func (h *Handler) GetUsersByAttendeId(w http.ResponseWriter, r *http.Request) {
+	attIdStr := mux.Vars(r)["att_id"]
+	attId, err := uuid.Parse(attIdStr)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "att ID not valid")
+		return
+	}
+
+	user ,err := h.DB.GetUserByAttendeeid(attId)
+
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "att ID not valid")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(struct {
+	Role   string `json:"role"`
+	AutoId string `json:"auto_id"`
+	}{
+		user.Role,
+		strconv.Itoa(user.AutoId),
+	})
+
 }

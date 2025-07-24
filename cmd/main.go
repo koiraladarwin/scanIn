@@ -47,7 +47,7 @@ func main() {
 
 	handler := handlers.New(db, fbAuth)
 
-  api.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
+	api.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
 	api.HandleFunc("/user", handler.GetUser).Methods(constants.Get)
 	api.HandleFunc("/users/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
 	api.HandleFunc("/importusers/{event_id}", handler.ImportUser).Methods(constants.Post)
@@ -59,7 +59,8 @@ func main() {
 	api.HandleFunc("/activity", handler.CreateActivity).Methods(constants.Post)
 
 	api.HandleFunc("/attendees", handler.RegisterAttendee).Methods(constants.Post)
-  api.HandleFunc("/user2/{event_id}", handler.CreateUser2).Methods(constants.Post)
+	api.HandleFunc("/user2/{event_id}", handler.CreateUser2).Methods(constants.Post)
+	api.HandleFunc("/attendeescheck/{att_id}", handler.GetUsersByAttendeId).Methods(constants.Get)
 
 	api.HandleFunc("/checkins", handler.GetCheckIn).Methods(constants.Get)
 	api.HandleFunc("/checkins/{id}", handler.GetCheckInById).Methods(constants.Get)
