@@ -209,16 +209,16 @@ func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if row[0] == "" || row[1] == "" || row[2] == "" || row[3] == "" {
+		if row[0] == ""  {
 			failedLog = append(failedLog, fmt.Sprintf("Failed to create user in row %v username:%s - company:%s - role:%s - position:%s because a field is empty", i+1, row[0], row[1], row[2], row[3]))
 			continue
 		}
 
 		user := models.UserRequest{
-			FullName: row[0],
-			Company:  row[1],
-			Role:     row[2],
-			Position: row[3],
+			Role:     row[0],
+			FullName: row[1],
+			Position: row[2],
+			Company:  row[3],
 		}
 		users = append(users, user)
 	}

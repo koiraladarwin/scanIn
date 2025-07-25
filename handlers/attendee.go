@@ -48,7 +48,7 @@ func (h *Handler) RegisterAttendee(w http.ResponseWriter, r *http.Request) {
 			utils.RespondWithError(w, http.StatusConflict, "Attendee already registered")
 			return
 		}
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to register attendee")
+    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to register attendee"+err.Error())
 		return
 	}
 
