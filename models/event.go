@@ -78,6 +78,7 @@ type CheckInRespose struct {
 	ID         uuid.UUID `json:"id"`
 	FullName   string    `json:"full_name"`
 	AttendeeID uuid.UUID `json:"attendee_id"` // FK to Attendee
+	AttendeeName string `json:"attendee_name"` // FK to Attendee
 	ActivityID uuid.UUID `json:"activity_id"` // FK to Activity
 	ScannedAt  time.Time `json:"scanned_at"`
 	Status     string    `json:"status"`     // e.g. "success", "duplicate", "invalid"

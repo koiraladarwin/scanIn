@@ -213,11 +213,17 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
 			return
 		}
+		activity, err := h.DB.GetActivity(logItem.ActivityID)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get activity details")
+			return
+		}
 
 		resp := models.CheckInRespose{
 			ID:         logItem.ID,
 			FullName:   user.FullName,
 			AttendeeID: logItem.AttendeeID,
+      AttendeeName: activity.Name, 
 			ActivityID: logItem.ActivityID,
 			ScannedAt:  logItem.ScannedAt,
 			ScannedBy:  logItem.ScannedBy,
@@ -302,6 +308,7 @@ func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
 /*
 GetCheckInById , retrives all check Ins
 
