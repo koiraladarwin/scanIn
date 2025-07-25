@@ -220,14 +220,14 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 		}
 
 		resp := models.CheckInRespose{
-			ID:         logItem.ID,
-			FullName:   user.FullName,
-			AttendeeID: logItem.AttendeeID,
-			Activity:   activity.Name,
-			ActivityID: logItem.ActivityID,
-			ScannedAt:  logItem.ScannedAt,
-			ScannedBy:  logItem.ScannedBy,
-			Status:     logItem.Status,
+			ID:           logItem.ID,
+			FullName:     user.FullName,
+			AttendeeID:   logItem.AttendeeID,
+			ActivityName: activity.Name,
+			ActivityID:   logItem.ActivityID,
+			ScannedAt:    logItem.ScannedAt,
+			ScannedBy:    logItem.ScannedBy,
+			Status:       logItem.Status,
 		}
 		responses = append(responses, resp)
 	}
