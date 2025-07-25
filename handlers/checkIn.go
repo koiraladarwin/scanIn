@@ -223,7 +223,7 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 			ID:         logItem.ID,
 			FullName:   user.FullName,
 			AttendeeID: logItem.AttendeeID,
-      AttendeeName: activity.Name, 
+			Activity:   activity.Name,
 			ActivityID: logItem.ActivityID,
 			ScannedAt:  logItem.ScannedAt,
 			ScannedBy:  logItem.ScannedBy,

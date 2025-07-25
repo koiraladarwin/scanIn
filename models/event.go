@@ -19,11 +19,11 @@ type User struct {
 
 // User represents a registered person in the system
 type UserRequest struct {
-	FullName  string    `json:"full_name"`
-	Company   string    `json:"company"`
-	Position  string    `json:"position"`
-	Image_url string    `json:"image_url"`
-	Role      string    `json:"role"`     // "participant", "staff", "member"
+	FullName  string `json:"full_name"`
+	Company   string `json:"company"`
+	Position  string `json:"position"`
+	Image_url string `json:"image_url"`
+	Role      string `json:"role"` // "participant", "staff", "member"
 }
 
 type UserWithRole struct {
@@ -77,9 +77,9 @@ type CheckInLog struct {
 type CheckInRespose struct {
 	ID         uuid.UUID `json:"id"`
 	FullName   string    `json:"full_name"`
-	AttendeeID uuid.UUID `json:"attendee_id"` // FK to Attendee
-	AttendeeName string `json:"attendee_name"` // FK to Attendee
-	ActivityID uuid.UUID `json:"activity_id"` // FK to Activity
+	AttendeeID uuid.UUID `json:"attendee_id"`   // FK to Attendee
+	Activity   string    `json:"activity_name"` // FK to Attendee
+	ActivityID uuid.UUID `json:"activity_id"`   // FK to Activity
 	ScannedAt  time.Time `json:"scanned_at"`
 	Status     string    `json:"status"`     // e.g. "success", "duplicate", "invalid"
 	ScannedBy  string    `json:"scanned_by"` // FK to User (staff)
