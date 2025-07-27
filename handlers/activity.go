@@ -70,18 +70,27 @@ func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event"+err.Error())
 		return
 	}
+
 	if event == nil {
 		utils.RespondWithError(w, http.StatusNotFound, "Event not found")
 		return
 	}
 
-	activities, err := h.DB.GetActivitiesByEvent(eventID)
+	numberOfParticipants, err := h.DB.GetNumberOfAttendeesByEvent(eventID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activities")
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch number of participants")
 		return
 	}
 
-	resp := models.EventWithActivities{
+	event.NumberOfParticipant = numberOfParticipants
+
+	activities, err := h.DB.GetActivitiesByEvent(eventID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activities"+err.Error())
+		return
+	}
+
+	resp := models.EventInfo{
 		Event:      *event,
 		Activities: activities,
 	}

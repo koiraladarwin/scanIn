@@ -39,22 +39,24 @@ type UserWithRole struct {
 
 // Event represents a specific event like "Teej 2025"
 type Event struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	StartTime   time.Time `json:"start_time"`
-	EndTime     time.Time `json:"end_time"`
-	Location    string    `json:"location"`
+	ID                  uuid.UUID `json:"id"`
+	Name                string    `json:"name"`
+	Description         string    `json:"description"`
+	StartTime           time.Time `json:"start_time"`
+	EndTime             time.Time `json:"end_time"`
+	Location            string    `json:"location"`
+	NumberOfParticipant int       `json:"number_of_participant"`
 }
 
 // Activity is a feature or sub-event within an event (e.g. Registration, Food)
 type Activity struct {
-	ID        uuid.UUID `json:"id"`
-	EventID   uuid.UUID `json:"event_id"` // FK to Event
-	Name      string    `json:"name"`     // e.g. Registration, Dinner
-	Type      string    `json:"type"`     // e.g. "registration", "food", etc.
-	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time"`
+	ID                  uuid.UUID `json:"id"`
+	EventID             uuid.UUID `json:"event_id"` // FK to Event
+	Name                string    `json:"name"`     // e.g. Registration, Dinner
+	Type                string    `json:"type"`     // e.g. "registration", "food", etc.
+	StartTime           time.Time `json:"start_time"`
+	EndTime             time.Time `json:"end_time"`
+	NumberOfScanedUsers int       `json:"number_of_scaned_users"`
 }
 
 // Attendee links a user to an event
@@ -85,7 +87,7 @@ type CheckInRespose struct {
 	ScannedBy    string    `json:"scanned_by"` // FK to User (staff)
 }
 
-type EventWithActivities struct {
+type EventInfo struct {
 	Event      Event      `json:"event"`
 	Activities []Activity `json:"activities"`
 }

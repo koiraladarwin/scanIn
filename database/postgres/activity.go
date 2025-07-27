@@ -14,9 +14,15 @@ func (p *PostgresDB) CreateActivity(a *models.Activity) error {
 
 // GetActivity fetches a single activity by UUID
 func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
+	scannedUsers := 0
 	a := &models.Activity{}
 	query := `SELECT id, event_id, name, type, start_time, end_time FROM activities WHERE id = $1`
 	err := p.sql.QueryRow(query, id).Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime)
+	if err != nil {
+		return nil, err
+	}
+
+	a.NumberOfScanedUsers = scannedUsers
 	return a, err
 }
 
@@ -33,7 +39,6 @@ func (p *PostgresDB) DeleteActivity(id uuid.UUID) error {
 	return err
 }
 
-
 // GetActivities By event_id
 func (p *PostgresDB) GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity, error) {
 	activities := []models.Activity{}
@@ -45,11 +50,23 @@ func (p *PostgresDB) GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity,
 	defer rows.Close()
 
 	for rows.Next() {
+		scannedUsers := 0
+
 		var a models.Activity
 		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime); err != nil {
 			return nil, err
 		}
+
+		query = `SELECT COUNT(*) FROM check_in_logs WHERE activity_id = $1`
+		err = p.sql.QueryRow(query, a.ID).Scan(&scannedUsers)
+
+		if err != nil {
+			return nil, err
+		}
+		a.NumberOfScanedUsers = scannedUsers
+
 		activities = append(activities, a)
 	}
+
 	return activities, nil
 }

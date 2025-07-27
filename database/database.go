@@ -33,6 +33,7 @@ type Database interface {
 	UpdateAttendee(*models.Attendee) error
 	DeleteAttendee(id uuid.UUID) error
 	GetAttendeesByEvent(eventID uuid.UUID) ([]models.Attendee, error)
+	GetNumberOfAttendeesByEvent(eventID uuid.UUID) (int, error)
 
 	CreateCheckInLog(*models.CheckInLog) error
 	GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error)

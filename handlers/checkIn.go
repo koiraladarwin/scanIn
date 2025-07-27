@@ -215,8 +215,18 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 		}
 		activity, err := h.DB.GetActivity(logItem.ActivityID)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get activity details")
-			return
+			resp := models.CheckInRespose{
+				ID:           logItem.ID,
+				FullName:     user.FullName,
+				AttendeeID:   logItem.AttendeeID,
+				ActivityName: "Cant Find",
+				ActivityID:   logItem.ActivityID,
+				ScannedAt:    logItem.ScannedAt,
+				ScannedBy:    logItem.ScannedBy,
+				Status:       logItem.Status,
+			}
+			responses = append(responses, resp)
+			continue
 		}
 
 		resp := models.CheckInRespose{
@@ -349,7 +359,7 @@ func (h *Handler) GetCheckInById(w http.ResponseWriter, r *http.Request) {
 
 		activity, err := h.DB.GetActivity(logItem.ActivityID)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get activity name")
+			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get activity name"+err.Error())
 			return
 		}
 

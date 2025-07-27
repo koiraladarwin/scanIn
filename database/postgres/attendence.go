@@ -13,11 +13,11 @@ func (p *PostgresDB) CreateAttendee(a *models.Attendee) (*models.Attendee, error
 	err := p.sql.QueryRow(query, a.UserID, a.EventID).Scan(&a.ID)
 	if err != nil {
 		if isUniqueViolationError(err) {
-			return nil,db.ErrAlreadyExists
+			return nil, db.ErrAlreadyExists
 		}
-		return nil,err
+		return nil, err
 	}
-	return a,nil
+	return a, nil
 }
 
 // GetAttendee fetches an attendee by UUID
@@ -64,4 +64,14 @@ func (p *PostgresDB) UpdateAttendee(a *models.Attendee) error {
 func (p *PostgresDB) DeleteAttendee(id uuid.UUID) error {
 	_, err := p.sql.Exec(`DELETE FROM attendees WHERE id=$1`, id)
 	return err
+}
+
+func (p *PostgresDB) GetNumberOfAttendeesByEvent(eventID uuid.UUID) (int, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM attendees WHERE event_id = $1`
+	err := p.sql.QueryRow(query, eventID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
