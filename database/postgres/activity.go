@@ -57,7 +57,8 @@ func (p *PostgresDB) GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity,
 			return nil, err
 		}
 
-		query = `SELECT COUNT(*) FROM check_in_logs WHERE activity_id = $1`
+	
+query := `SELECT COUNT(*) FROM check_in_logs WHERE activity_id = $1 AND status = 'checked'`
 		err = p.sql.QueryRow(query, a.ID).Scan(&scannedUsers)
 
 		if err != nil {
