@@ -10,16 +10,35 @@ import (
 
 type contextKey string
 
-const FirebaseUserContextKey = contextKey("firebaseUser")
+const (
+	FirebaseUserContextKey contextKey = "firebaseUser"
+	AccessLevelContextKey  contextKey = "accessLevel"
+)
 
 func FbUserFromContext(ctx context.Context) *auth.UserRecord {
 	user, _ := ctx.Value(FirebaseUserContextKey).(*auth.UserRecord)
 	return user
 }
 
+func AccessLevelFromContext(ctx context.Context) int {
+	level, ok := ctx.Value(AccessLevelContextKey).(int)
+	if !ok {
+		return 0
+	}
+	return level
+}
+
+var accessLevels = map[string]int{
+	"darwinkoirala123@gmail.com":       10,
+	"darwinmage98422@gmail.com":        1,
+	"ocsbusinesssolution@gmail.com":    2,
+	"chhetrinirmal765@gmail.com":       2,
+	"scan1@ocsbusinesssolution.com.np": 1,
+	"scan2@ocsbusinesssolution.com.np": 1,
+}
+
 func (f *FirebaseAuth) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -39,19 +58,15 @@ func (f *FirebaseAuth) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		allowed := map[string]bool{
-			"darwinkoirala123@gmail.com":    true,
-			"ocsbusinesssolution@gmail.com": true,
-			"chhetrinirmal765@gmail.com":    true,
-		}
-
-		if !allowed[user.Email] {
+		level, allowed := accessLevels[user.Email]
+		if !allowed {
 			http.Error(w, "Unauthorized email", http.StatusUnauthorized)
 			return
-
 		}
 
 		ctx := context.WithValue(r.Context(), FirebaseUserContextKey, user)
+		ctx = context.WithValue(ctx, AccessLevelContextKey, level)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
