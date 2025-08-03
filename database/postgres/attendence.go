@@ -6,7 +6,6 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-// CreateAttendee inserts a new attendee and returns the generated UUID
 func (p *PostgresDB) CreateAttendee(a *models.Attendee) (*models.Attendee, error) {
 	query := `INSERT INTO attendees (user_id, event_id) VALUES ($1, $2) RETURNING id`
 
@@ -20,7 +19,6 @@ func (p *PostgresDB) CreateAttendee(a *models.Attendee) (*models.Attendee, error
 	return a, nil
 }
 
-// GetAttendee fetches an attendee by UUID
 func (p *PostgresDB) GetAttendee(id uuid.UUID) (*models.Attendee, error) {
 	a := &models.Attendee{}
 	query := `SELECT id, user_id, event_id  FROM attendees WHERE id=$1`
@@ -28,7 +26,6 @@ func (p *PostgresDB) GetAttendee(id uuid.UUID) (*models.Attendee, error) {
 	return a, err
 }
 
-// GetAttendee fetches an attendee by UUID
 func (p *PostgresDB) GetAttendeesByEvent(eventID uuid.UUID) ([]models.Attendee, error) {
 	var attendees []models.Attendee
 	query := `SELECT id, user_id, event_id FROM attendees WHERE event_id = $1`
@@ -53,25 +50,15 @@ func (p *PostgresDB) GetAttendeesByEvent(eventID uuid.UUID) ([]models.Attendee, 
 	return attendees, nil
 }
 
-// UpdateAttendee modifies the attendee's event or user
 func (p *PostgresDB) UpdateAttendee(a *models.Attendee) error {
 	query := `UPDATE attendees SET user_id=$1, event_id=$2 WHERE id=$3`
 	_, err := p.sql.Exec(query, a.UserID, a.EventID, a.ID)
 	return err
 }
 
-// DeleteAttendee removes an attendee by UUID
 func (p *PostgresDB) DeleteAttendee(id uuid.UUID) error {
 	_, err := p.sql.Exec(`DELETE FROM attendees WHERE id=$1`, id)
 	return err
 }
 
-func (p *PostgresDB) GetNumberOfAttendeesByEvent(eventID uuid.UUID) (int, error) {
-	var count int
-	query := `SELECT COUNT(*) FROM attendees WHERE event_id = $1`
-	err := p.sql.QueryRow(query, eventID).Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
+

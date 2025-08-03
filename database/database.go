@@ -6,23 +6,18 @@ import (
 )
 
 type Database interface {
-	CreateUser(*models.User) (*models.User, error)
+	CreateUser(*models.UserRequest) (*models.User, error)
 	GetUser(id uuid.UUID) (*models.User, error)
-	GetAllUsers() ([]models.User, error)
-	//UpdateUser(*models.User) error
-	//DeleteUser(id uuid.UUID) error
-	GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, error)
-	GetUserByAttendeeid(Attendeeid uuid.UUID) (*models.User, error)
+	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
 
-	CreateEvent(*models.Event) error
+	CreateEvent(*models.EventRequest) error
 	GetEvent(id uuid.UUID) (*models.Event, error)
 	UpdateEvent(*models.Event) error
 	DeleteEvent(id uuid.UUID) error
-	//GetEventsByAttendee(attendeeID uuid.UUID) ([]*models.Event, error)
 	EventExists(eventID uuid.UUID) (bool, error)
 	GetAllEvents() ([]models.Event, error)
 
-	CreateActivity(*models.Activity) error
+	CreateActivity(*models.ActivityRequest) error
 	GetActivity(id uuid.UUID) (*models.Activity, error)
 	UpdateActivity(*models.Activity) error
 	DeleteActivity(id uuid.UUID) error
@@ -33,13 +28,13 @@ type Database interface {
 	UpdateAttendee(*models.Attendee) error
 	DeleteAttendee(id uuid.UUID) error
 	GetAttendeesByEvent(eventID uuid.UUID) ([]models.Attendee, error)
-	GetNumberOfAttendeesByEvent(eventID uuid.UUID) (int, error)
+	GetNumberOfUsersByEvent(eventID uuid.UUID) (int, error)
 
-	CreateCheckInLog(*models.CheckInLog) error
+	CreateCheckInLog(*models.CheckInLogRequest) error
 	GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error)
 	UpdateCheckInLog(*models.CheckInLog) error
 	DeleteCheckInLog(id uuid.UUID) error
-	CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (uuid.UUID, error)
+	CheckInExists(userID uuid.UUID, activityID uuid.UUID) (uuid.UUID, error)
 	GetAllCheckInLog() ([]models.CheckInLog, error)
 	GetAllCheckInOfEvents(eventID uuid.UUID) ([]models.CheckInLog, error)
 

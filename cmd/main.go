@@ -48,13 +48,9 @@ func main() {
 		log.Fatal("database count not be connected")
 	}
 
-	handler := handlers.New(db, fbAuth)
+  handler := handlers.New(db, fbAuth)
 
-	log.Printf("got here %s", port)
-
-	AdminRouter.HandleFunc("/user", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateUser)).Methods(constants.Post)
-	AdminRouter.HandleFunc("/user", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetUser)).Methods(constants.Get)
-
+  AdminRouter.HandleFunc("/user", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateUser)).Methods(constants.Post)
 	AdminRouter.HandleFunc("/users/{event_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetUsersByEvent)).Methods(constants.Get)
 	AdminRouter.HandleFunc("/importusers/{event_id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ImportUser)).Methods(constants.Post)
 
@@ -63,10 +59,6 @@ func main() {
 	AdminRouter.HandleFunc("/eventinfo", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetEventInfo)).Methods(constants.Get)
 
 	AdminRouter.HandleFunc("/activity", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateActivity)).Methods(constants.Post)
-
-	AdminRouter.HandleFunc("/attendees", middleware.RequireAccessLevel(AdminAccessLevel, handler.RegisterAttendee)).Methods(constants.Post)
-	AdminRouter.HandleFunc("/user2/{event_id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateUser2)).Methods(constants.Post)
-	AdminRouter.HandleFunc("/attendeescheck/{att_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetUsersByAttendeId)).Methods(constants.Get)
 
 	AdminRouter.HandleFunc("/checkins", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckIn)).Methods(constants.Get)
 	AdminRouter.HandleFunc("/checkins/{id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInById)).Methods(constants.Get)

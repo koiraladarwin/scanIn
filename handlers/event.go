@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
 )
@@ -24,7 +25,7 @@ Returns:
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
-	var c models.Event
+	var c models.EventRequest
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
@@ -51,9 +52,66 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
+w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(events)
 }
 
 
+
+/*
+GetEventInfo returns event details along with its activities.
+Accepts:
+  - event_id (query param): UUID of the event
+
+Returns:
+  - 200 OK with JSON { event: {...}, activities: [...] }
+  - 400 Bad Request if event_id missing or invalid
+  - 404 Not Found if event does not exist
+  - 500 Internal Server Error on DB failures
+*/
+func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
+	eventIDStr := r.URL.Query().Get("event_id")
+	if eventIDStr == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Missing event_id query parameter")
+		return
+	}
+
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid event_id format")
+		return
+	}
+
+	event, err := h.DB.GetEvent(eventID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event"+err.Error())
+		return
+	}
+
+	if event == nil {
+		utils.RespondWithError(w, http.StatusNotFound, "Event not found")
+		return
+	}
+
+	numberOfParticipants, err := h.DB.GetNumberOfUsersByEvent(eventID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch number of participants")
+		return
+	}
+
+	event.NumberOfParticipant = numberOfParticipants
+
+	activities, err := h.DB.GetActivitiesByEvent(eventID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activities"+err.Error())
+		return
+	}
+
+	resp := models.EventInfo{
+		Event:      *event,
+		Activities: activities,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}

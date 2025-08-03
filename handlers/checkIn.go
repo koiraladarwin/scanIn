@@ -47,14 +47,14 @@ func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Context value is not of type *auth.UserRecord", http.StatusInternalServerError)
 		return
 	}
-	var c models.CheckInLog
+	var c models.CheckInLogRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
 
-	id, err := h.DB.CheckInExists(c.AttendeeID, c.ActivityID)
+	id, err := h.DB.CheckInExists(c.UserID, c.ActivityID)
 	if errors.Is(err, db.ErrNotFound) {
 		c.ScannedBy = fbuser.Email
 		c.ScannedAt = time.Now()
@@ -131,7 +131,7 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.DB.GetUserByAttendeeid(checkIn.AttendeeID)
+	user, err := h.DB.GetUser(checkIn.UserID)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusNotFound, "user id not found")
 		return
@@ -152,7 +152,7 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 
 		checkInReponse := models.CheckInRespose{
 			ID:         checkIn.ID,
-			AttendeeID: checkIn.AttendeeID,
+			UserID:     checkIn.UserID,
 			ActivityID: checkIn.ActivityID,
 			Status:     checkIn.Status,
 			FullName:   user.FullName,
@@ -176,7 +176,7 @@ func (h *Handler) ModifyCheckIn(w http.ResponseWriter, r *http.Request) {
 
 	checkInReponse := models.CheckInRespose{
 		ID:         checkIn.ID,
-		AttendeeID: checkIn.AttendeeID,
+		UserID:     checkIn.UserID,
 		ActivityID: checkIn.ActivityID,
 		Status:     checkIn.Status,
 		FullName:   user.FullName,
@@ -208,7 +208,7 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 	var responses []models.CheckInRespose
 
 	for _, logItem := range checkInLogs {
-		user, err := h.DB.GetUserByAttendeeid(logItem.AttendeeID)
+		user, err := h.DB.GetUser(logItem.UserID)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
 			return
@@ -218,7 +218,7 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 			resp := models.CheckInRespose{
 				ID:           logItem.ID,
 				FullName:     user.FullName,
-				AttendeeID:   logItem.AttendeeID,
+				UserID:       logItem.UserID,
 				ActivityName: "Cant Find",
 				ActivityID:   logItem.ActivityID,
 				ScannedAt:    logItem.ScannedAt,
@@ -232,7 +232,7 @@ func (h *Handler) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 		resp := models.CheckInRespose{
 			ID:           logItem.ID,
 			FullName:     user.FullName,
-			AttendeeID:   logItem.AttendeeID,
+			UserID:       logItem.UserID,
 			ActivityName: activity.Name,
 			ActivityID:   logItem.ActivityID,
 			ScannedAt:    logItem.ScannedAt,
@@ -286,7 +286,7 @@ func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, logItem := range checkInLogs {
-		user, err := h.DB.GetUserByAttendeeid(logItem.AttendeeID)
+		user, err := h.DB.GetUser(logItem.UserID)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
 			return
@@ -351,7 +351,7 @@ func (h *Handler) GetCheckInById(w http.ResponseWriter, r *http.Request) {
 	var responses []models.CheckInRespose
 
 	for _, logItem := range checkInLogs {
-		user, err := h.DB.GetUserByAttendeeid(logItem.AttendeeID)
+		user, err := h.DB.GetUser(logItem.UserID)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
 			return
@@ -366,7 +366,7 @@ func (h *Handler) GetCheckInById(w http.ResponseWriter, r *http.Request) {
 		resp := models.CheckInRespose{
 			ID:           logItem.ID,
 			FullName:     user.FullName,
-			AttendeeID:   logItem.AttendeeID,
+			UserID:       logItem.UserID,
 			ActivityName: activity.Name,
 			ActivityID:   logItem.ActivityID,
 			ScannedAt:    logItem.ScannedAt,

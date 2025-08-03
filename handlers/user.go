@@ -13,16 +13,7 @@ import (
 	"github.com/koiraladarwin/scanin/utils"
 	"github.com/xuri/excelize/v2"
 )
-
 /*
-CreateUser accepts JSON:
-
-	{
-	  "full_name": "string",
-	  "email": "string",
-	  "phone": "string",
-	}
-
 Returns:
 - 201 Created with created user JSON on success
 - 400 Bad Request for invalid input
@@ -31,7 +22,7 @@ Returns:
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var u models.User
+	var u models.UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
@@ -61,102 +52,41 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-GetAllUsers returns a list of all users.
-
 Returns:
-- 200 OK with JSON array of users on success
-- 500 Internal Server Error on DB failure
+- 200 OK with JSON array of attendees
+- 400 Bad Request if event ID is not a valid UUID
+- 404 Not Found if event does not exist
+- 500 Internal Server Error on database errors
 */
-func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-	users, err := h.DB.GetAllUsers()
+func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
+	eventIDStr := mux.Vars(r)["event_id"]
+	eventID, err := uuid.Parse(eventIDStr)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch users")
+		utils.RespondWithError(w, http.StatusBadRequest, "event ID not valid")
+		return
+	}
+
+	exists, err := h.DB.EventExists(eventID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "database error")
+		return
+	}
+
+	if !exists {
+		utils.RespondWithError(w, http.StatusNotFound, "event not found")
+		return
+	}
+
+	attendees, err := h.DB.GetUsersByEvent(eventID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "failed to fetch attendees")
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	json.NewEncoder(w).Encode(attendees)
 }
 
-/*
-CreateUser accepts JSON:
-
-	{
-	  "full_name": "string",
-	  "company": "string",
-	  "position": "string",
-    "image_url":"string",
-    "role": "string"
-	}
-
-Returns:
-- 201 Created with created user JSON on success
-- 400 Bad Request for invalid input
-- 405 Method not allowed except POST
-- 409 Failed because User Exists already
-- 500 Internal Server Error on DB failure
-*/
-
-// CreateUser2 is a modified version of CreateUser that accepts an event ID from the URL path.
-func (h *Handler) CreateUser2(w http.ResponseWriter, r *http.Request) {
-	var userReq models.UserRequest
-	vars := mux.Vars(r)
-	idStr := vars["event_id"]
-	if idStr == "" {
-		utils.RespondWithError(w, http.StatusBadRequest, "Missing Event ID")
-		return
-	}
-	EventUuid, err := uuid.Parse(idStr)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid Event ID")
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&userReq); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-		return
-	}
-
-	if userReq.Image_url == "" || userReq.FullName == "" || userReq.Position == "" || userReq.Company == "" {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-		return
-	}
-
-	user, err := h.DB.CreateUser(&models.User{
-		FullName:  userReq.FullName,
-		Company:   userReq.Company,
-		Position:  userReq.Position,
-		Image_url: userReq.Image_url,
-		Role:      userReq.Role,
-	})
-
-	if errors.Is(err, db.ErrAlreadyExists) {
-		utils.RespondWithError(w, http.StatusConflict, "User Already Exists")
-		return
-	}
-
-	if err != nil {
-		fmt.Print(err.Error())
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create user")
-		return
-	}
-
-	attendde, err := h.DB.CreateAttendee(&models.Attendee{
-		UserID:  user.ID,
-		EventID: EventUuid,
-	})
-
-	user.ID = attendde.ID
-
-	if err != nil {
-		fmt.Print(err.Error())
-		utils.RespondWithError(w, http.StatusInternalServerError, "User created by failed to create Attendee . Check the event Id dude")
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
-}
 
 func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -209,7 +139,7 @@ func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if row[0] == ""  {
+		if row[0] == "" {
 			failedLog = append(failedLog, fmt.Sprintf("Failed to create user in row %v username:%s - company:%s - role:%s - position:%s because a field is empty", i+1, row[0], row[1], row[2], row[3]))
 			continue
 		}
@@ -224,24 +154,16 @@ func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, user := range users {
-		user, err := h.DB.CreateUser(&models.User{
+		user, err := h.DB.CreateUser(&models.UserRequest{
 			FullName:  user.FullName,
 			Company:   user.Company,
 			Position:  user.Position,
 			Image_url: "https://res.cloudinary.com/dcvr2byrp/image/upload/v1753007426/qocwao1uaykjjnkzqxvo.jpg",
 			Role:      user.Role,
+			EventId:   eventID.String(),
 		})
 		if err != nil {
 			failedLog = append(failedLog, fmt.Sprintf("Failed to create user in row %v username:%s - company:%s - role:%s - position:%s because %v", i+2, user.FullName, user.Company, user.Role, user.Position, err.Error()))
-			continue
-		}
-		_, err = h.DB.CreateAttendee(&models.Attendee{
-			EventID: eventID,
-			UserID:  user.ID,
-		})
-
-		if err != nil {
-			failedLog = append(failedLog, fmt.Sprintf("failed to add addendee please check the event id"))
 			continue
 		}
 	}
