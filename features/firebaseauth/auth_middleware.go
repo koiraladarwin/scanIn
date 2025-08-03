@@ -31,6 +31,7 @@ func AccessLevelFromContext(ctx context.Context) int {
 var accessLevels = map[string]int{
 	"darwinkoirala123@gmail.com":       10,
 	"darwinmage98422@gmail.com":        1,
+	"darwinisabot7@gmail.com":        2,
 	"ocsbusinesssolution@gmail.com":    2,
 	"chhetrinirmal765@gmail.com":       2,
 	"scan1@ocsbusinesssolution.com.np": 1,
