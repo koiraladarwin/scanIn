@@ -2,6 +2,7 @@ package firebaseauth
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strings"
 
@@ -31,7 +32,7 @@ func AccessLevelFromContext(ctx context.Context) int {
 var accessLevels = map[string]int{
 	"darwinkoirala123@gmail.com":       10,
 	"darwinmage98422@gmail.com":        1,
-	"darwinisabot7@gmail.com":        2,
+	"darwinisabot7@gmail.com":          2,
 	"ocsbusinesssolution@gmail.com":    2,
 	"chhetrinirmal765@gmail.com":       2,
 	"scan1@ocsbusinesssolution.com.np": 1,
@@ -43,18 +44,21 @@ func (f *FirebaseAuth) AuthMiddleware(next http.Handler) http.Handler {
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
+			log.Print("Misssing Authorization header: " + authHeader)
 			http.Error(w, "Missing Authorization header", http.StatusUnauthorized)
 			return
 		}
 
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if token == authHeader {
+			log.Print("Malformed Authorization header: " + authHeader)
 			http.Error(w, "Malformed Authorization header", http.StatusUnauthorized)
 			return
 		}
 
 		user, err := f.GetUserInfoByIDToken(r.Context(), token)
 		if err != nil {
+			log.Print("Firebase Authorization header: " + err.Error())
 			http.Error(w, "Invalid token: "+err.Error(), http.StatusUnauthorized)
 			return
 		}
