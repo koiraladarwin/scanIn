@@ -30,13 +30,14 @@ type Database interface {
 	GetAttendeesByEvent(eventID uuid.UUID) ([]models.Attendee, error)
 	GetNumberOfUsersByEvent(eventID uuid.UUID) (int, error)
 
-	CreateCheckInLog(*models.CheckInLogRequest) error
+	CreateCheckInLog(*models.CheckInLog) error
 	GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error)
 	UpdateCheckInLog(*models.CheckInLog) error
 	DeleteCheckInLog(id uuid.UUID) error
 	CheckInExists(userID uuid.UUID, activityID uuid.UUID) (uuid.UUID, error)
 	GetAllCheckInLog() ([]models.CheckInLog, error)
 	GetAllCheckInOfEvents(eventID uuid.UUID) ([]models.CheckInLog, error)
+	GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.CheckInRespose, error)
 
 	Close() error
 }

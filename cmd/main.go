@@ -48,9 +48,9 @@ func main() {
 		log.Fatal("database count not be connected")
 	}
 
-  handler := handlers.New(db, fbAuth)
+	handler := handlers.New(db, fbAuth)
 
-  AdminRouter.HandleFunc("/user", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateUser)).Methods(constants.Post)
+	AdminRouter.HandleFunc("/user", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateUser)).Methods(constants.Post)
 	AdminRouter.HandleFunc("/users/{event_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetUsersByEvent)).Methods(constants.Get)
 	AdminRouter.HandleFunc("/importusers/{event_id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ImportUser)).Methods(constants.Post)
 
@@ -61,7 +61,8 @@ func main() {
 	AdminRouter.HandleFunc("/activity", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateActivity)).Methods(constants.Post)
 
 	AdminRouter.HandleFunc("/checkins", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckIn)).Methods(constants.Get)
-	AdminRouter.HandleFunc("/checkins/{id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInById)).Methods(constants.Get)
+	AdminRouter.HandleFunc("/checkins/{event_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInByEventId)).Methods(constants.Get)
+	AdminRouter.HandleFunc("/activitycheckins/{activity_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInByActivityId)).Methods(constants.Get)
 	AdminRouter.HandleFunc("/checkins", middleware.RequireAccessLevel(StaffAccessLevel, handler.CreateCheckIn)).Methods(constants.Post)
 	AdminRouter.HandleFunc("/checkins/{id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ModifyCheckIn)).Methods(constants.Put)
 	AdminRouter.HandleFunc("/exportcheckins/{event_id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ExportCheckIn)).Methods(constants.Get)
