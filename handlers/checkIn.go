@@ -334,6 +334,7 @@ Returns:
 */
 
 func (h *Handler) GetCheckInByEventId(w http.ResponseWriter, r *http.Request) {
+  log.Println("Executing GetCheckInByEventId handler")
 	vars := mux.Vars(r)
 	eventIdStr := vars["event_id"]
 	if eventIdStr == "" {
@@ -397,6 +398,39 @@ Returns:
 */
 
 func (h *Handler) GetCheckInByActivityId(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	activityIdStr := vars["activity_id"]
+	if activityIdStr == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Missing ID")
+		return
+	}
+
+	activityId, err := uuid.Parse(activityIdStr)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
+		return
+	}
+
+	checkInLogs, err := h.DB.GetAllCheckInOfActivity(activityId)
+	if err != nil {
+		log.Print(err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(checkInLogs)
+}
+/*
+GetCheckInById , retrives all check Ins
+
+Returns:
+- 200 OK with updated check-in JSON on success
+- 500 Internal Server Error on DB failure
+*/
+
+func (h *Handler) GetCheckInByUserId(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	activityIdStr := vars["activity_id"]
 	if activityIdStr == "" {

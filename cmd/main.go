@@ -63,6 +63,7 @@ func main() {
 	AdminRouter.HandleFunc("/checkins", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckIn)).Methods(constants.Get)
 	AdminRouter.HandleFunc("/checkins/{event_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInByEventId)).Methods(constants.Get)
 	AdminRouter.HandleFunc("/activitycheckins/{activity_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInByActivityId)).Methods(constants.Get)
+	AdminRouter.HandleFunc("/attendeecheckins/{attendee_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInByActivityId)).Methods(constants.Get)
 	AdminRouter.HandleFunc("/checkins", middleware.RequireAccessLevel(StaffAccessLevel, handler.CreateCheckIn)).Methods(constants.Post)
 	AdminRouter.HandleFunc("/checkins/{id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ModifyCheckIn)).Methods(constants.Put)
 	AdminRouter.HandleFunc("/exportcheckins/{event_id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ExportCheckIn)).Methods(constants.Get)

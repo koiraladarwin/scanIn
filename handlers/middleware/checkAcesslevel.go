@@ -13,8 +13,8 @@ func RequireAccessLevel(minLevel int, next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-  
-  	
+
+
 		next(w, r)
 	}
 }

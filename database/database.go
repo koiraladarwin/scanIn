@@ -38,6 +38,7 @@ type Database interface {
 	GetAllCheckInLog() ([]models.CheckInLog, error)
 	GetAllCheckInOfEvents(eventID uuid.UUID) ([]models.CheckInLog, error)
 	GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.CheckInRespose, error)
+	GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInRespose, error)
 
 	Close() error
 }

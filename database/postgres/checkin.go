@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/google/uuid"
 	db "github.com/koiraladarwin/scanin/database"
@@ -25,7 +26,6 @@ func (p *PostgresDB) GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error) {
 func (p *PostgresDB) GetAllCheckInLog() ([]models.CheckInLog, error) {
 	logs := []models.CheckInLog{}
 	query := `SELECT id, user_id, activity_id, scanned_at, status, scanned_by FROM check_in_logs`
-
 	rows, err := p.sql.Query(query)
 	if err != nil {
 		return nil, err
@@ -76,13 +76,14 @@ func (p *PostgresDB) CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (
 }
 
 func (p *PostgresDB) GetAllCheckInOfEvents(eventID uuid.UUID) ([]models.CheckInLog, error) {
+  log.Print("Executing query to get all check-in logs: ")
 	var checkIns []models.CheckInLog
-
 	queryActivities := `SELECT id FROM activities WHERE event_id = $1`
 	rows, err := p.sql.Query(queryActivities, eventID)
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	for rows.Next() {
@@ -115,6 +116,58 @@ func (p *PostgresDB) GetAllCheckInOfEvents(eventID uuid.UUID) ([]models.CheckInL
 	return checkIns, nil
 }
 
+func (p *PostgresDB) GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInRespose, error) {
+	var checkIns []models.CheckInRespose
+
+	query := `
+		SELECT 
+			c.id,
+			u.full_name,
+      u.auto_id,
+      u.role,
+			c.user_id,
+			a.name as activity_name,
+			c.activity_id,
+			c.scanned_at,
+			c.status,
+			c.scanned_by
+		FROM check_in_logs c
+		JOIN users u ON u.id = c.user_id
+		JOIN activities a ON a.id = c.activity_id
+		WHERE c.user_id = $1
+	`
+
+	rows, err := p.sql.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var checkIn models.CheckInRespose
+		if err := rows.Scan(
+			&checkIn.ID,
+			&checkIn.FullName,
+			&checkIn.AutoId,
+			&checkIn.Role,
+			&checkIn.UserID,
+			&checkIn.ActivityName,
+			&checkIn.ActivityID,
+			&checkIn.ScannedAt,
+			&checkIn.Status,
+			&checkIn.ScannedBy,
+		); err != nil {
+			return nil, err
+		}
+		checkIns = append(checkIns, checkIn)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return checkIns, nil
+}
 
 func (p *PostgresDB) GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.CheckInRespose, error) {
 	var checkIns []models.CheckInRespose
@@ -148,8 +201,8 @@ func (p *PostgresDB) GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.Che
 		if err := rows.Scan(
 			&checkIn.ID,
 			&checkIn.FullName,
-      &checkIn.AutoId,
-      &checkIn.Role,
+			&checkIn.AutoId,
+			&checkIn.Role,
 			&checkIn.UserID,
 			&checkIn.ActivityName,
 			&checkIn.ActivityID,
@@ -168,4 +221,3 @@ func (p *PostgresDB) GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.Che
 
 	return checkIns, nil
 }
-
