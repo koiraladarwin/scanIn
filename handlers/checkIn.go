@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"firebase.google.com/go/auth"
@@ -254,6 +255,7 @@ Returns:
 - 200 OK with updated check-in JSON on success
 - 500 Internal Server Error on DB failure
 */
+
 func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["event_id"]
@@ -270,7 +272,7 @@ func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 
 	checkInLogs, err := h.DB.GetAllCheckInOfEvents(id)
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("Error getting check-in logs: %v", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
 		return
 	}
@@ -279,32 +281,70 @@ func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 	sheet := "CheckIns"
 	f.SetSheetName("Sheet1", sheet)
 
-	headers := []string{"ID", "Full Name", "Activity ", "Scanned At", "Scanned By", "Status"}
+	headers := []string{"ID", "Full Name", "Company", "Activity", "Scanned At", "Scanned By", "Status"}
 	for i, header := range headers {
 		cell := fmt.Sprintf("%c1", 'A'+i)
-		f.SetCellValue(sheet, cell, header)
+		if err := f.SetCellValue(sheet, cell, header); err != nil {
+			log.Printf("Error setting header cell value: %v", err)
+		}
 	}
 
 	for i, logItem := range checkInLogs {
+		log.Printf("Starting iteration %d", i)
+
 		user, err := h.DB.GetUserByAttendeeid(logItem.AttendeeID)
 		if err != nil {
+			log.Printf("Error getting user for check-in %d: %v", i, err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
 			return
 		}
+
 		activity, err := h.DB.GetActivity(logItem.ActivityID)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get user details")
+			log.Printf("Error getting activity for check-in %d: %v", i, err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Can't get activity details")
 			return
 		}
 
-		rowNum := i + 2 // excel rows start at 1 and row 1 is the header so manually +2
+		if logItem.ScannedAt.IsZero() {
+			log.Printf("Warning: CheckIn %d has zero ScannedAt time", i)
+		}
 
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", rowNum), user.AutoId)
-		f.SetCellValue(sheet, fmt.Sprintf("B%d", rowNum), user.FullName)
-		f.SetCellValue(sheet, fmt.Sprintf("C%d", rowNum), activity.Name)
-		f.SetCellValue(sheet, fmt.Sprintf("D%d", rowNum), logItem.ScannedAt.Format(time.RFC3339))
-		f.SetCellValue(sheet, fmt.Sprintf("E%d", rowNum), logItem.ScannedBy)
-		f.SetCellValue(sheet, fmt.Sprintf("F%d", rowNum), logItem.Status)
+		nepalTime := logItem.ScannedAt.In(time.FixedZone("NPT", 5*3600+45*60))
+		formattedTime := nepalTime.Format("2006-01-02 15:04:05")
+
+		rowNum := i + 2 // Excel rows start at 1; row 1 is header
+
+		err = f.SetCellValue(sheet, fmt.Sprintf("A%d", rowNum), user.Role+"-"+strconv.Itoa(user.AutoId))
+		if err != nil {
+			log.Printf("Error setting cell A%d: %v", rowNum, err)
+		}
+		err = f.SetCellValue(sheet, fmt.Sprintf("B%d", rowNum), user.FullName)
+		if err != nil {
+			log.Printf("Error setting cell B%d: %v", rowNum, err)
+		}
+		err = f.SetCellValue(sheet, fmt.Sprintf("C%d", rowNum), user.Company)
+		if err != nil {
+			log.Printf("Error setting cell A%d: %v", rowNum, err)
+		}
+		err = f.SetCellValue(sheet, fmt.Sprintf("D%d", rowNum), activity.Name)
+		if err != nil {
+			log.Printf("Error setting cell C%d: %v", rowNum, err)
+		}
+		err = f.SetCellValue(sheet, fmt.Sprintf("E%d", rowNum), formattedTime)
+		if err != nil {
+			log.Printf("Error setting cell D%d: %v", rowNum, err)
+		}
+		err = f.SetCellValue(sheet, fmt.Sprintf("F%d", rowNum), logItem.ScannedBy)
+		if err != nil {
+			log.Printf("Error setting cell E%d: %v", rowNum, err)
+		}
+		err = f.SetCellValue(sheet, fmt.Sprintf("G%d", rowNum), logItem.Status)
+		if err != nil {
+			log.Printf("Error setting cell F%d: %v", rowNum, err)
+		}
+
+		log.Printf("Finished iteration %d, ScannedAt (NPT): %s", i, formattedTime)
 	}
 
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -316,7 +356,6 @@ func (h *Handler) ExportCheckIn(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing Excel file: %v", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to write Excel file")
 	}
-
 }
 
 /*
