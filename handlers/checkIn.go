@@ -53,19 +53,21 @@ func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-
+	log.Print(c.ActivityID)
+	log.Print(c.UserID)
 	id, err := h.DB.CheckInExists(c.UserID, c.ActivityID)
 	if errors.Is(err, db.ErrNotFound) {
 		scannedBy := fbuser.Email
 		scannedAt := time.Now()
 		err := h.DB.CreateCheckInLog(&models.CheckInLog{
-			UserID: c.UserID,
-      ActivityID: c.ActivityID,
-      ScannedAt:  scannedAt,
-      Status:     "checked",
-      ScannedBy:  scannedBy,
+			UserID:     c.UserID,
+			ActivityID: c.ActivityID,
+			ScannedAt:  scannedAt,
+			Status:     "checked",
+			ScannedBy:  scannedBy,
 		})
 		if err != nil {
+
 			log.Print(err.Error())
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check in")
 			return
@@ -77,12 +79,14 @@ func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
+		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check existing check-in")
 		return
 	}
 
 	user, err := h.DB.GetCheckInLog(id)
 	if err != nil {
+		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch existing check-in")
 		return
 	}
@@ -334,7 +338,7 @@ Returns:
 */
 
 func (h *Handler) GetCheckInByEventId(w http.ResponseWriter, r *http.Request) {
-  log.Println("Executing GetCheckInByEventId handler")
+	log.Println("Executing GetCheckInByEventId handler")
 	vars := mux.Vars(r)
 	eventIdStr := vars["event_id"]
 	if eventIdStr == "" {
@@ -422,6 +426,7 @@ func (h *Handler) GetCheckInByActivityId(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(checkInLogs)
 }
+
 /*
 GetCheckInById , retrives all check Ins
 
@@ -434,14 +439,14 @@ func (h *Handler) GetCheckInByUserId(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	activityIdStr := vars["attendee_id"]
 	if activityIdStr == "" {
-    log.Print("Missing ID")
+		log.Print("Missing ID")
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing ID")
 		return
 	}
 
 	activityId, err := uuid.Parse(activityIdStr)
 	if err != nil {
-    log.Print("Invalid ID format: ", err.Error())
+		log.Print("Invalid ID format: ", err.Error())
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
@@ -452,7 +457,7 @@ func (h *Handler) GetCheckInByUserId(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
 		return
 	}
-  log.Print(checkInLogs)
+	log.Print(checkInLogs)
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(checkInLogs)

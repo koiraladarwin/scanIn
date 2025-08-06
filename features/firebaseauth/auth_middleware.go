@@ -42,7 +42,6 @@ var accessLevels = map[string]int{
 func (f *FirebaseAuth) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			log.Print("Misssing Authorization header: " + authHeader)

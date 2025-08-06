@@ -28,6 +28,6 @@ type CheckInRespose struct {
 }
 
 type CheckInLogRequest struct {
-	UserID     uuid.UUID `json:"user_id"`
+	UserID     uuid.UUID `json:"attendee_id"`
 	ActivityID uuid.UUID `json:"activity_id"`
 }
