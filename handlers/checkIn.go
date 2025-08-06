@@ -432,25 +432,27 @@ Returns:
 
 func (h *Handler) GetCheckInByUserId(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	activityIdStr := vars["activity_id"]
+	activityIdStr := vars["attendee_id"]
 	if activityIdStr == "" {
+    log.Print("Missing ID")
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing ID")
 		return
 	}
 
 	activityId, err := uuid.Parse(activityIdStr)
 	if err != nil {
+    log.Print("Invalid ID format: ", err.Error())
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 
-	checkInLogs, err := h.DB.GetAllCheckInOfActivity(activityId)
+	checkInLogs, err := h.DB.GetAllCheckInOfUser(activityId)
 	if err != nil {
 		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
 		return
 	}
-
+  log.Print(checkInLogs)
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(checkInLogs)
