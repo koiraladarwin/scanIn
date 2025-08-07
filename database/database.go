@@ -40,5 +40,12 @@ type Database interface {
 	GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.CheckInRespose, error)
 	GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInRespose, error)
 
+	IsCreator(fbId string, eventId string) (bool, error)
+	CanSeeScanned(fbId string, eventId string) (bool, error)
+	CanCreateActivity(fbId string, eventId string) (bool, error)
+	CanCreateAttendee(fbId string, eventId string) (bool, error)
+	CanSeeAttendee(fbId string, eventId string) (bool, error)
+	CanSeeEventInfo(fbId, eventId string) (bool, error)
+
 	Close() error
 }

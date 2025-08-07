@@ -35,7 +35,7 @@ func (p *PostgresDB) Close() error {
 
 func (p *PostgresDB) createTables() error {
 	stmts := []string{
-		`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`, 
+		`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`,
 
 		`CREATE TABLE IF NOT EXISTS events (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -67,12 +67,24 @@ func (p *PostgresDB) createTables() error {
 			end_time TIMESTAMP NOT NULL
 		);`,
 
-		`CREATE TABLE IF NOT EXISTS staff (
+		`CREATE TABLE IF NOT EXISTS eventRoles (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			full_name TEXT NOT NULL,
-      password TEXT NOT NULL,
-			email TEXT UNIQUE NOT NULL,
-			phone TEXT
+      event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE, 
+      fireBaseId text NOT NULL,
+      isCreator BOOLEAN NOT NULL DEFAULT false,
+      canSeeScanned BOOLEAN NOT NULL DEFAULT false,  
+      canCreateActivity BOOLEAN NOT NULL DEFAULT false,
+      canCreateAttendee BOOLEAN NOT NULL DEFAULT false,
+      canSeeAttendee BOOLEAN NOT NULL DEFAULT false,
+      UNIQUE (eventId, fireBaseId)
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS scanRoles (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      fireBaseId text NOT NULL,
+      activityId UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+      access BOOLEAN NOT NULL DEFAULT false,
+      UNIQUE (fireBaseId, activityId)
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS check_in_logs (

@@ -9,10 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/koiraladarwin/scanin/database"
+	"github.com/koiraladarwin/scanin/features/firebaseauth"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
 	"github.com/xuri/excelize/v2"
 )
+
 /*
 Returns:
 - 201 Created with created user JSON on success
@@ -22,9 +24,22 @@ Returns:
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
 	var u models.UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
+	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
+
+	if err != nil || !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: ")
 		return
 	}
 
@@ -59,10 +74,24 @@ Returns:
 - 500 Internal Server Error on database errors
 */
 func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
 	eventIDStr := mux.Vars(r)["event_id"]
 	eventID, err := uuid.Parse(eventIDStr)
+
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "event ID not valid")
+		return
+	}
+
+	access, err := h.DB.CanSeeAttendee(fireBaseUser.UID, eventIDStr)
+
+	if err != nil || !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: ")
 		return
 	}
 
@@ -87,8 +116,13 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(attendees)
 }
 
-
 func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
 	vars := mux.Vars(r)
 	streventID := vars["event_id"]
 	if streventID == "" {
@@ -99,6 +133,13 @@ func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
 	eventID, err := uuid.Parse(streventID)
 	if err != nil {
 		http.Error(w, "Invalid event_id format", http.StatusBadRequest)
+		return
+	}
+
+	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, streventID)
+
+	if err != nil || !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: ")
 		return
 	}
 

@@ -12,12 +12,6 @@ import (
 	"github.com/koiraladarwin/scanin/database/postgres"
 	"github.com/koiraladarwin/scanin/features/firebaseauth"
 	"github.com/koiraladarwin/scanin/handlers"
-	"github.com/koiraladarwin/scanin/handlers/middleware"
-)
-
-const (
-	AdminAccessLevel = 2
-	StaffAccessLevel = 1
 )
 
 func main() {
@@ -39,8 +33,8 @@ func main() {
 		log.Fatal("DATABASE_URL not set in environment")
 	}
 
-	AdminRouter := mux.NewRouter()
-	AdminRouter.Use(fbAuth.AuthMiddleware)
+	Router := mux.NewRouter()
+	Router.Use(fbAuth.AuthMiddleware)
 
 	db, err := postgres.ConnectPostgres(connStr)
 	if err != nil {
@@ -50,26 +44,26 @@ func main() {
 
 	handler := handlers.New(db, fbAuth)
 
-	AdminRouter.HandleFunc("/user", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateUser)).Methods(constants.Post)
-	AdminRouter.HandleFunc("/users/{event_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetUsersByEvent)).Methods(constants.Get)
-	AdminRouter.HandleFunc("/importusers/{event_id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ImportUser)).Methods(constants.Post)
+	Router.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
+	Router.HandleFunc("/users/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
+	Router.HandleFunc("/importusers/{event_id}", handler.ImportUser).Methods(constants.Post)
 
-	AdminRouter.HandleFunc("/event", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateEvent)).Methods(constants.Post)
-	AdminRouter.HandleFunc("/event", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetEvent)).Methods(constants.Get)
-	AdminRouter.HandleFunc("/eventinfo", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetEventInfo)).Methods(constants.Get)
+	Router.HandleFunc("/event", handler.CreateEvent).Methods(constants.Post)
+	Router.HandleFunc("/event", handler.GetEvent).Methods(constants.Get)
+	Router.HandleFunc("/eventinfo", handler.GetEventInfo).Methods(constants.Get)
 
-	AdminRouter.HandleFunc("/activity", middleware.RequireAccessLevel(AdminAccessLevel, handler.CreateActivity)).Methods(constants.Post)
+	Router.HandleFunc("/activity", handler.CreateActivity).Methods(constants.Post)
 
-	AdminRouter.HandleFunc("/checkins", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckIn)).Methods(constants.Get)
-	AdminRouter.HandleFunc("/checkins/{event_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInByEventId)).Methods(constants.Get)
-	AdminRouter.HandleFunc("/activitycheckins/{activity_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInByActivityId)).Methods(constants.Get)
-	AdminRouter.HandleFunc("/attendeecheckins/{attendee_id}", middleware.RequireAccessLevel(StaffAccessLevel, handler.GetCheckInByUserId)).Methods(constants.Get)
-	AdminRouter.HandleFunc("/checkins", middleware.RequireAccessLevel(StaffAccessLevel, handler.CreateCheckIn)).Methods(constants.Post)
-	AdminRouter.HandleFunc("/checkins/{id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ModifyCheckIn)).Methods(constants.Put)
-	AdminRouter.HandleFunc("/exportcheckins/{event_id}", middleware.RequireAccessLevel(AdminAccessLevel, handler.ExportCheckIn)).Methods(constants.Get)
+	Router.HandleFunc("/checkins", handler.GetCheckIn).Methods(constants.Get)
+	Router.HandleFunc("/checkins/{event_id}", handler.GetCheckInByEventId).Methods(constants.Get)
+	Router.HandleFunc("/activitycheckins/{activity_id}", handler.GetCheckInByActivityId).Methods(constants.Get)
+	Router.HandleFunc("/attendeecheckins/{attendee_id}", handler.GetCheckInByUserId).Methods(constants.Get)
+	Router.HandleFunc("/checkins", handler.CreateCheckIn).Methods(constants.Post)
+  Router.HandleFunc("/checkins/{id}", handler.ModifyCheckIn).Methods(constants.Put)
+	Router.HandleFunc("/exportcheckins/{event_id}", handler.ExportCheckIn).Methods(constants.Get)
 
 	log.Printf("Server running on port %s", port)
-	err = http.ListenAndServe(":"+port, WithCORS(AdminRouter))
+	err = http.ListenAndServe(":"+port, WithCORS(Router))
 
 	if err != nil {
 		log.Fatal(err)
