@@ -53,8 +53,7 @@ func (h *Handler) CreateCheckIn(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-	log.Print(c.ActivityID)
-	log.Print(c.UserID)
+
 	id, err := h.DB.CheckInExists(c.UserID, c.ActivityID)
 	if errors.Is(err, db.ErrNotFound) {
 		scannedBy := fbuser.Email
@@ -402,7 +401,14 @@ Returns:
 */
 
 func (h *Handler) GetCheckInByActivityId(w http.ResponseWriter, r *http.Request) {
+
+	fbUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: no user in context")
+		return
+	}
 	vars := mux.Vars(r)
+
 	activityIdStr := vars["activity_id"]
 	if activityIdStr == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing ID")
@@ -414,9 +420,32 @@ func (h *Handler) GetCheckInByActivityId(w http.ResponseWriter, r *http.Request)
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
+  
+  eventId , err := h.DB.GetEventIdByActivity(activityId)
+  if err != nil {
+    log.Println("here1")
+    log.Println(err.Error())
+    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to get event ID by activity")
+    return
+  }
+  
+	access, err := h.DB.CanSeeScanned(fbUser.UID, eventId.String())
+
+  if err != nil {
+    log.Println("here2")
+    log.Println(err.Error())
+    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+    return
+  }
+  
+  if !access {
+    utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+    return
+  }
 
 	checkInLogs, err := h.DB.GetAllCheckInOfActivity(activityId)
 	if err != nil {
+    log.Println("here3")
 		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
 		return

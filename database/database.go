@@ -26,13 +26,7 @@ type Database interface {
 	UpdateActivity(*models.Activity) error
 	DeleteActivity(id uuid.UUID) error
 	GetActivitiesByEvent(firebaseId string, eventID uuid.UUID) ([]models.Activity, error)
-
-	CreateAttendee(*models.Attendee) (*models.Attendee, error)
-	GetAttendee(id uuid.UUID) (*models.Attendee, error)
-	UpdateAttendee(*models.Attendee) error
-	DeleteAttendee(id uuid.UUID) error
-	GetAttendeesByEvent(eventID uuid.UUID) ([]models.Attendee, error)
-	GetNumberOfUsersByEvent(eventID uuid.UUID) (int, error)
+	GetEventIdByActivity(activityId uuid.UUID) (uuid.UUID, error)
 
 	CreateCheckInLog(*models.CheckInLog) error
 	GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error)
