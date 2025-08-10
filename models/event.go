@@ -1,8 +1,8 @@
 package models
 
 import (
-	"time"
 	"github.com/google/uuid"
+	"time"
 )
 
 type UserWithRole struct {
@@ -18,7 +18,7 @@ type UserWithRole struct {
 
 type Attendee struct {
 	ID      uuid.UUID `json:"id"`
-	UserID  uuid.UUID `json:"user_id"`  
+	UserID  uuid.UUID `json:"user_id"`
 	EventID uuid.UUID `json:"event_id"`
 }
 
@@ -30,6 +30,7 @@ type Event struct {
 	EndTime             time.Time `json:"end_time"`
 	Location            string    `json:"location"`
 	NumberOfParticipant int       `json:"number_of_participant"`
+	StaffCode           *string   `json:"staff_code"`
 }
 
 type EventRequest struct {

@@ -11,17 +11,21 @@ type Database interface {
 	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
 
 	CreateEvent(*models.EventRequest) error
-	GetEvent(id uuid.UUID) (*models.Event, error)
 	UpdateEvent(*models.Event) error
 	DeleteEvent(id uuid.UUID) error
 	EventExists(eventID uuid.UUID) (bool, error)
 	GetAllEvents() ([]models.Event, error)
+	GetEventsByFirebaseUser(firebaseId string) ([]models.Event, error)
+	GetEventByFirebaseUser(firebaseId string, eventId uuid.UUID) (*models.Event, error)
+	GetEventByAdminId(id string) (*models.Event, error)
+	GetEventByStaffId(id string) (*models.Event, error)
+  GetStaffByEvent(eventId string) ([]models.Staff, error)
 
 	CreateActivity(*models.ActivityRequest) error
 	GetActivity(id uuid.UUID) (*models.Activity, error)
 	UpdateActivity(*models.Activity) error
 	DeleteActivity(id uuid.UUID) error
-	GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity, error)
+	GetActivitiesByEvent(firebaseId string, eventID uuid.UUID) ([]models.Activity, error)
 
 	CreateAttendee(*models.Attendee) (*models.Attendee, error)
 	GetAttendee(id uuid.UUID) (*models.Attendee, error)
@@ -46,6 +50,10 @@ type Database interface {
 	CanCreateAttendee(fbId string, eventId string) (bool, error)
 	CanSeeAttendee(fbId string, eventId string) (bool, error)
 	CanSeeEventInfo(fbId, eventId string) (bool, error)
+	AddStaffToEvent(fbId, eventId string) error
+	AddAdminToEvent(fbId, eventId string) error
+	AddEventRole(role models.RoleRequest) error
+	ModifyEventRole(role models.EditRoleRequest) error
 
 	Close() error
 }

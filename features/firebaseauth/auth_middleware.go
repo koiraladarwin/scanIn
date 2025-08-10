@@ -38,7 +38,7 @@ func (f *FirebaseAuth) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := f.GetUserInfoByIDToken(r.Context(), token)
+		user, err := f.VerifyUserByIdToken(r.Context(), token)
 
 		if err != nil {
 			log.Print("Firebase Authorization header: " + err.Error())

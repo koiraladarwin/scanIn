@@ -1,20 +1,129 @@
 package postgres
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/koiraladarwin/scanin/models"
+	"github.com/koiraladarwin/scanin/utils"
 )
 
 func (p *PostgresDB) CreateEvent(e *models.EventRequest) error {
-  var id string
-	query := `INSERT INTO events (name, description, start_time, end_time, location) 
-			  VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	return p.sql.QueryRow(query, e.Name, e.Description, e.StartTime, e.EndTime, e.Location).Scan(&id)
+	var id string
+	var staff_code = utils.RandomString(6)
+	var admin_code = utils.RandomString(7)
+
+	query := `INSERT INTO events (name, description, start_time, end_time, location, staff_code, admin_code) 
+			  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+	return p.sql.QueryRow(query, e.Name, e.Description, e.StartTime, e.EndTime, e.Location, staff_code, admin_code).Scan(&id)
 }
 
-func (p *PostgresDB) GetEvent(id uuid.UUID) (*models.Event, error) {
+func (p *PostgresDB) GetEventsByFirebaseUser(firebaseUser string) ([]models.Event, error) {
+	query := `
+
+SELECT 
+    e.id,
+    e.name,
+    e.description,
+    e.start_time,
+    e.end_time,
+    e.location,
+    MAX(
+      CASE 
+        WHEN er.isCreator = true THEN e.staff_code
+        ELSE NULL
+      END
+    ) AS staff_code,
+    COUNT(u.id) AS number_of_participants
+FROM events e
+JOIN eventRoles er ON e.id = er.event_id
+LEFT JOIN users u ON u.event_id = e.id
+WHERE er.fireBaseId = $1
+GROUP BY e.id, e.name, e.description, e.start_time, e.end_time, e.location
+`
+	rows, err := p.sql.Query(query, firebaseUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []models.Event
+	for rows.Next() {
+		var e models.Event
+		if err := rows.Scan(
+			&e.ID,
+			&e.Name,
+			&e.Description,
+			&e.StartTime,
+			&e.EndTime,
+			&e.Location,
+			&e.StaffCode,
+			&e.NumberOfParticipant, // Make sure this field exists in your models.Event
+		); err != nil {
+			return nil, err
+		}
+		events = append(events, e)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
+
+func (p *PostgresDB) GetEventByFirebaseUser(firebaseId string, eventId uuid.UUID) (*models.Event, error) {
 	e := &models.Event{}
-	query := `SELECT id, name, description, start_time, end_time, location FROM events WHERE id = $1`
+
+	query := `
+SELECT
+  e.id,
+  e.name,
+  e.description,
+  e.start_time,
+  e.end_time,
+  e.location,
+  CASE WHEN er.isCreator THEN e.staff_code ELSE NULL END AS staff_code,
+  CASE
+    WHEN er.isCreator OR er.canSeeAttendee THEN (
+      SELECT COUNT(*) FROM users WHERE event_id = e.id
+    )
+    ELSE -1
+  END AS number_of_participant
+FROM events e
+JOIN eventRoles er ON e.id = er.event_id
+WHERE e.id = $1 AND er.fireBaseId = $2
+`
+
+	err := p.sql.QueryRow(query, eventId, firebaseId).Scan(
+		&e.ID,
+		&e.Name,
+		&e.Description,
+		&e.StartTime,
+		&e.EndTime,
+		&e.Location,
+		&e.StaffCode,
+		&e.NumberOfParticipant,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+
+    fmt.Printf("number: %d \n", e.NumberOfParticipant)
+	return e, nil
+}
+
+func (p *PostgresDB) GetEventByStaffId(id string) (*models.Event, error) {
+	e := &models.Event{}
+	query := `SELECT id, name, description, start_time, end_time, location FROM events WHERE staff_code = $1`
+	err := p.sql.QueryRow(query, id).Scan(&e.ID, &e.Name, &e.Description, &e.StartTime, &e.EndTime, &e.Location)
+	return e, err
+}
+
+func (p *PostgresDB) GetEventByAdminId(id string) (*models.Event, error) {
+	e := &models.Event{}
+	query := `SELECT id, name, description, start_time, end_time, location FROM events WHERE admin_code = $1`
 	err := p.sql.QueryRow(query, id).Scan(&e.ID, &e.Name, &e.Description, &e.StartTime, &e.EndTime, &e.Location)
 	return e, err
 }

@@ -43,7 +43,9 @@ func (p *PostgresDB) createTables() error {
 			description TEXT,
 			start_time TIMESTAMP NOT NULL,
 			end_time TIMESTAMP NOT NULL,
-			location TEXT
+			location TEXT,
+      admin_code TEXT NOT NULL UNIQUE,
+      staff_code TEXT NOT NULL UNIQUE
 		);`,
 
 		`create table if not exists users (

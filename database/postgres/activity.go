@@ -36,34 +36,47 @@ func (p *PostgresDB) DeleteActivity(id uuid.UUID) error {
 	return err
 }
 
-func (p *PostgresDB) GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity, error) {
+
+func (p *PostgresDB) GetActivitiesByEvent(firebaseId string,eventID uuid.UUID) ([]models.Activity, error) {
 	activities := []models.Activity{}
-	query := `SELECT id, event_id, name, type, start_time, end_time FROM activities WHERE event_id = $1`
-	rows, err := p.sql.Query(query, eventID)
+
+	query := `
+SELECT
+  a.id,
+  a.event_id,
+  a.name,
+  a.type,
+  a.start_time,
+  a.end_time,
+  CASE
+   WHEN er.isCreator OR er.canSeeScanned THEN COALESCE(scanned.count, 0)
+  ELSE -1
+  END AS number_of_scanned_users
+FROM activities a
+JOIN eventRoles er ON er.event_id = a.event_id AND er.fireBaseId = $2
+LEFT JOIN (
+  SELECT activity_id, COUNT(*) AS count
+  FROM check_in_logs
+  WHERE status = 'checked'
+  GROUP BY activity_id
+) scanned ON scanned.activity_id = a.id
+WHERE a.event_id = $1
+`
+
+	rows, err := p.sql.Query(query, eventID, firebaseId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		scannedUsers := 0
-
 		var a models.Activity
-		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime); err != nil {
+		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime, &a.NumberOfScanedUsers); err != nil {
 			return nil, err
 		}
-
-	
-query := `SELECT COUNT(*) FROM check_in_logs WHERE activity_id = $1 AND status = 'checked'`
-		err = p.sql.QueryRow(query, a.ID).Scan(&scannedUsers)
-
-		if err != nil {
-			return nil, err
-		}
-		a.NumberOfScanedUsers = scannedUsers
-
 		activities = append(activities, a)
 	}
 
 	return activities, nil
 }
+	

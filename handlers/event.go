@@ -2,25 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/koiraladarwin/scanin/features/firebaseauth"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
 )
 
 /*
-CreateEvent accepts JSON:
-
-	{
-	  "name": "string",
-	  "description": "timestamp",
-	  "start_time": "2025-07-08T15:30:00Z",
-	  "end_time": "2025-07-09T15:30:00Z",
-	  "location": "string"
-	}
-
 Returns:
 - 201 Created with created check-in JSON on success
 - 400 Bad Request for invalid input
@@ -41,16 +33,67 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(c)
 }
 
-/*
-GetEvent handles GET
+func (h *Handler) AddEventWithEventCode(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	code := vars["code"]
 
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: no user in context")
+		return
+	}
+
+	if len(code) != 6 && len(code) != 7 {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid staff_code or admin_code length")
+		return
+	}
+
+	var event *models.Event
+	var err error
+
+	if len(code) == 6 {
+		event, err = h.DB.GetEventByStaffId(code)
+	} else {
+		event, err = h.DB.GetEventByAdminId(code)
+	}
+
+	if err != nil {
+    log.Println("Failed to fetch event by code:", err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event by code")
+		return
+	}
+	if event == nil {
+		utils.RespondWithError(w, http.StatusNotFound, "Event not found")
+		return
+	}
+
+	err = h.DB.AddStaffToEvent(fireBaseUser.UID, event.ID.String())
+	if err != nil {
+    log.Println("Failed to fetch event by code:2", err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add staff to event")
+		return
+	}
+
+	json.NewEncoder(w).Encode(event)
+}
+
+/*
 Returns:
 - 200 OK with JSON array of all events
 - 500 Internal Server Error if DB query fails
 */
 func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
-	events, err := h.DB.GetAllEvents()
+	// events, err := h.DB.GetAllEvents()
+	firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		log.Println("Unauthorized: no user in context")
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
+	events, err := h.DB.GetEventsByFirebaseUser(firebaseUser.UID)
 	if err != nil {
+		log.Println("Failed to fetch events:", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
 		return
 	}
@@ -59,18 +102,14 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-GetEventInfo returns event details along with its activities.
-Accepts:
-  - event_id (query param): UUID of the event
-
 Returns:
   - 200 OK with JSON { event: {...}, activities: [...] }
   - 400 Bad Request if event_id missing or invalid
   - 404 Not Found if event does not exist
   - 500 Internal Server Error on DB failures
 */
-func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 
+func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
@@ -83,54 +122,28 @@ func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	access, err := h.DB.CanSeeEventInfo(fireBaseUser.UID,eventIDStr)
-
-	if err != nil || !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, err.Error() )
-		return
-	}
-
 	eventID, err := uuid.Parse(eventIDStr)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid event_id format")
 		return
 	}
 
-	event, err := h.DB.GetEvent(eventID)
+	event, err := h.DB.GetEventByFirebaseUser(fireBaseUser.UID, eventID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event"+err.Error())
+    log.Println("Failed to fetch event:", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event: "+err.Error())
 		return
 	}
-
 	if event == nil {
-		utils.RespondWithError(w, http.StatusNotFound, "Event not found")
+		utils.RespondWithError(w, http.StatusNotFound, "Event not found or no access")
 		return
 	}
 
-	numberOfParticipants, err := h.DB.GetNumberOfUsersByEvent(eventID)
+	activities, err := h.DB.GetActivitiesByEvent(fireBaseUser.UID, eventID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch number of participants")
+    log.Println("Failed to fetch event1 :", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activities: "+err.Error())
 		return
-	}
-
-	event.NumberOfParticipant = numberOfParticipants
-
-	activities, err := h.DB.GetActivitiesByEvent(eventID)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activities"+err.Error())
-		return
-	}
-
-	access, err = h.DB.CanSeeAttendee(fireBaseUser.UID, eventIDStr)
-	if err != nil || !access {
-		event.NumberOfParticipant = -1
-	}
-
-	access, err = h.DB.CanSeeScanned(fireBaseUser.UID, eventIDStr)
-	if err != nil || !access {
-		for i := range activities {
-			activities[i].NumberOfScanedUsers = -1
-		}
 	}
 
 	resp := models.EventInfo{
@@ -138,6 +151,8 @@ func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 		Activities: activities,
 	}
 
+	log.Print("event info response: ", resp)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
+

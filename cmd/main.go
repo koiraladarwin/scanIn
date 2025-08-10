@@ -28,6 +28,7 @@ func main() {
 		log.Fatal("firebase Auth could not be instatitated")
 	}
 
+  log.Print("here")
 	connStr := os.Getenv("POSTGRESS_URL")
 	if connStr == "" {
 		log.Fatal("DATABASE_URL not set in environment")
@@ -42,6 +43,7 @@ func main() {
 		log.Fatal("database count not be connected")
 	}
 
+  log.Print("here")
 	handler := handlers.New(db, fbAuth)
 
 	Router.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
@@ -51,6 +53,10 @@ func main() {
 	Router.HandleFunc("/event", handler.CreateEvent).Methods(constants.Post)
 	Router.HandleFunc("/event", handler.GetEvent).Methods(constants.Get)
 	Router.HandleFunc("/eventinfo", handler.GetEventInfo).Methods(constants.Get)
+	Router.HandleFunc("/addeventwithcode/{code}", handler.AddEventWithEventCode).Methods(constants.Post)
+	Router.HandleFunc("/giveRoleToStaffs", handler.GiveRoleToStaff).Methods(constants.Post)
+	Router.HandleFunc("/modifyRoleToStaffs", handler.ModifyRoleToStaff).Methods(constants.Post)
+	Router.HandleFunc("/getstaffs/{event_id}", handler.GetStaffsByEvent).Methods(constants.Get)
 
 	Router.HandleFunc("/activity", handler.CreateActivity).Methods(constants.Post)
 

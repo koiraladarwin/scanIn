@@ -68,7 +68,7 @@ func (f *FirebaseAuth) verifyIDToken(ctx context.Context, idToken string) (*auth
 	return f.AuthClient.VerifyIDToken(ctx, idToken)
 }
 
-func (f *FirebaseAuth) GetUserInfoByIDToken(ctx context.Context, idToken string) (*auth.UserRecord, error) {
+func (f *FirebaseAuth) VerifyUserByIdToken(ctx context.Context, idToken string) (*auth.UserRecord, error) {
 	token, err := f.verifyIDToken(ctx, idToken)
 	if err != nil {
 		return nil, err
@@ -80,6 +80,22 @@ func (f *FirebaseAuth) GetUserInfoByIDToken(ctx context.Context, idToken string)
 	}
 	return userRecord, nil
 }
+
+
+func (f *FirebaseAuth) GetUserByIdToken(ctx context.Context, idToken string) (*auth.UserRecord, error) {
+    token, err := f.AuthClient.GetUser(ctx, idToken)
+    if err != nil {
+        return nil, fmt.Errorf("failed to verify ID token: %w", err)
+    }
+
+    userRecord, err := f.AuthClient.GetUser(ctx, token.UID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get user record: %w", err)
+    }
+
+    return userRecord, nil
+}
+
 
 func (f *FirebaseAuth) ListAllUsers(ctx context.Context) ([]*auth.ExportedUserRecord, error) {
 	var users []*auth.ExportedUserRecord

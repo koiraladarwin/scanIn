@@ -38,8 +38,12 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
 
-	if err != nil || !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: ")
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
 		return
 	}
 
@@ -90,10 +94,14 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	access, err := h.DB.CanSeeAttendee(fireBaseUser.UID, eventIDStr)
 
-	if err != nil || !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: ")
-		return
-	}
+if err != nil {
+	utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+	return
+}
+if !access {
+	utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+	return
+}
 
 	exists, err := h.DB.EventExists(eventID)
 	if err != nil {
@@ -138,10 +146,14 @@ func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
 
 	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, streventID)
 
-	if err != nil || !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: ")
-		return
-	}
+	if err != nil {
+	utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+	return
+}
+if !access {
+	utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+	return
+}
 
 	failedLog := []string{}
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
