@@ -85,12 +85,17 @@ func withCORS(next http.Handler) http.Handler {
 }
 
 func main() {
-	port := "4000"
+
 	ctx := context.Background()
 	if os.Getenv("RAILWAY_ENVIRONMENT_ID") == "" {
 		if err := godotenv.Load(); err != nil {
 			log.Println(".env file not found, using environment variables instead")
 		}
+	}
+
+	port := os.Getenv("PORT") 
+	if port == "" {
+		port = "4000" 
 	}
 
 	fbAuth, err := firebaseauth.NewFirebaseAuth(ctx)
