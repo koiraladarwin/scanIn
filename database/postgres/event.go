@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/koiraladarwin/scanin/models"
@@ -20,7 +21,6 @@ func (p *PostgresDB) CreateEvent(e *models.EventRequest) error {
 
 func (p *PostgresDB) GetEventsByFirebaseUser(firebaseUser string) ([]models.Event, error) {
 	query := `
-
 SELECT 
     e.id,
     e.name,
@@ -28,7 +28,8 @@ SELECT
     e.start_time,
     e.end_time,
     e.location,
-    MAX(
+    (SELECT COUNT(*) FROM eventRoles WHERE event_id = e.id) AS staff_count,
+  MAX(
       CASE 
         WHEN er.isCreator = true THEN e.staff_code
         ELSE NULL
@@ -36,7 +37,7 @@ SELECT
     ) AS staff_code,
     CASE
       WHEN MAX(CASE WHEN er.isCreator = true OR er.canSeeAttendee THEN 1 ELSE 0 END) = 1 THEN
-        COUNT(u.id)
+        COUNT(DISTINCT u.id)
       ELSE
         -1
     END AS number_of_participants
@@ -45,6 +46,7 @@ JOIN eventRoles er ON e.id = er.event_id
 LEFT JOIN users u ON u.event_id = e.id
 WHERE er.fireBaseId = $1
 GROUP BY e.id, e.name, e.description, e.start_time, e.end_time, e.location;
+
 `
 	rows, err := p.sql.Query(query, firebaseUser)
 	if err != nil {
@@ -62,12 +64,14 @@ GROUP BY e.id, e.name, e.description, e.start_time, e.end_time, e.location;
 			&e.StartTime,
 			&e.EndTime,
 			&e.Location,
+			&e.NumberOfStaff,
 			&e.StaffCode,
 			&e.NumberOfParticipant, // Make sure this field exists in your models.Event
 		); err != nil {
 			return nil, err
 		}
 		events = append(events, e)
+		log.Printf("Event fetched: %+v\n", e)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -176,24 +180,16 @@ func (p *PostgresDB) GetAllEvents() ([]models.Event, error) {
 }
 
 func (p *PostgresDB) GetEventIdByActivity(acitvity uuid.UUID) (uuid.UUID, error) {
-  event := models.Event{}
+	event := models.Event{}
 
-  query := `SELECT event_id FROM activities WHERE id = $1 limit 1`
-  err := p.sql.QueryRow(query, acitvity).Scan(&event.ID)
-  if err != nil {
-    return uuid.Nil, fmt.Errorf("failed to get event id by activity: %w", err)
-  }
-  if event.ID == uuid.Nil {
-    return uuid.Nil, fmt.Errorf("no event found for activity id: %s", acitvity)
-  }
+	query := `SELECT event_id FROM activities WHERE id = $1 limit 1`
+	err := p.sql.QueryRow(query, acitvity).Scan(&event.ID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to get event id by activity: %w", err)
+	}
+	if event.ID == uuid.Nil {
+		return uuid.Nil, fmt.Errorf("no event found for activity id: %s", acitvity)
+	}
 
-  return event.ID, nil
+	return event.ID, nil
 }
-
-
-
-
-
-
-
-

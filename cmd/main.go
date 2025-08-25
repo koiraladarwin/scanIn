@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"log"
-	"net"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -15,60 +13,9 @@ import (
 	"github.com/koiraladarwin/scanin/database/postgres"
 	"github.com/koiraladarwin/scanin/features/firebaseauth"
 	"github.com/koiraladarwin/scanin/handlers"
-	"golang.org/x/time/rate"
 )
 
-type clientLimiter struct {
-	limiter  *rate.Limiter
-	lastSeen time.Time
-}
 
-var (
-	clients = make(map[string]*clientLimiter)
-	mu      sync.Mutex
-)
-
-func getLimiter(ip string) *rate.Limiter {
-	mu.Lock()
-	defer mu.Unlock()
-
-	cl, exists := clients[ip]
-	if !exists {
-		cl = &clientLimiter{
-			limiter:  rate.NewLimiter(1, 10),
-			lastSeen: time.Now(),
-		}
-		clients[ip] = cl
-	} else {
-		cl.lastSeen = time.Now()
-	}
-	return cl.limiter
-}
-
-func rateLimitMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			ip = r.RemoteAddr
-		}
-		limiter := getLimiter(ip)
-		if !limiter.Allow() {
-			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func timeoutMiddleware(timeout time.Duration) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, cancel := context.WithTimeout(r.Context(), timeout)
-			defer cancel()
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
 
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -109,9 +56,7 @@ func main() {
 	}
 
 	Router := mux.NewRouter()
-	Router.Use(rateLimitMiddleware)
 	Router.Use(fbAuth.AuthMiddleware)
-	Router.Use(timeoutMiddleware(5 * time.Second))
 
 	db, err := postgres.ConnectPostgres(connStr)
 	if err != nil {
@@ -142,19 +87,6 @@ func main() {
 	Router.HandleFunc("/checkins", handler.CreateCheckIn).Methods(constants.Post)
 	Router.HandleFunc("/checkins/{id}", handler.ModifyCheckIn).Methods(constants.Put)
 	Router.HandleFunc("/exportcheckins/{event_id}", handler.ExportCheckIn).Methods(constants.Get)
-
-	go func() {
-		for {
-			time.Sleep(time.Minute)
-			mu.Lock()
-			for ip, cl := range clients {
-				if time.Since(cl.lastSeen) > 10*time.Minute {
-					delete(clients, ip)
-				}
-			}
-			mu.Unlock()
-		}
-	}()
 
 	log.Printf("Server running on port %s", port)
 	err = http.ListenAndServe(":"+port, withCORS(Router))

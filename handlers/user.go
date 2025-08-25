@@ -36,6 +36,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
+
 	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
 
 	if err != nil {
@@ -47,7 +48,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if u.Image_url == "" || u.FullName == "" || u.Position == "" || u.Company == "" {
+	if u.FullName == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}

@@ -30,6 +30,7 @@ type Event struct {
 	EndTime             time.Time `json:"end_time"`
 	Location            string    `json:"location"`
 	NumberOfParticipant int       `json:"number_of_participant"`
+	NumberOfStaff       int       `json:"number_of_staff"`
 	StaffCode           *string   `json:"staff_code"`
 }
 

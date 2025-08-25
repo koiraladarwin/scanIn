@@ -420,32 +420,32 @@ func (h *Handler) GetCheckInByActivityId(w http.ResponseWriter, r *http.Request)
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
-  
-  eventId , err := h.DB.GetEventIdByActivity(activityId)
-  if err != nil {
-    log.Println("here1")
-    log.Println(err.Error())
-    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to get event ID by activity")
-    return
-  }
-  
+
+	eventId, err := h.DB.GetEventIdByActivity(activityId)
+	if err != nil {
+		log.Println("here1")
+		log.Println(err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to get event ID by activity")
+		return
+	}
+
 	access, err := h.DB.CanSeeScanned(fbUser.UID, eventId.String())
 
-  if err != nil {
-    log.Println("here2")
-    log.Println(err.Error())
-    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-    return
-  }
-  
-  if !access {
-    utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-    return
-  }
+	if err != nil {
+		log.Println("here2")
+		log.Println(err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
+
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+		return
+	}
 
 	checkInLogs, err := h.DB.GetAllCheckInOfActivity(activityId)
 	if err != nil {
-    log.Println("here3")
+		log.Println("here3")
 		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
 		return
@@ -462,27 +462,26 @@ GetCheckInById , retrives all check Ins
 Returns:
 - 200 OK with updated check-in JSON on success
 - 500 Internal Server Error on DB failure
+- 400 Bad Request
 */
 
 func (h *Handler) GetCheckInByUserId(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	checkInLogs := []models.CheckInRespose{}
 	activityIdStr := vars["attendee_id"]
 	if activityIdStr == "" {
-		log.Print("Missing ID")
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing ID")
 		return
 	}
 
 	activityId, err := uuid.Parse(activityIdStr)
 	if err != nil {
-		log.Print("Invalid ID format: ", err.Error())
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 
-	checkInLogs, err := h.DB.GetAllCheckInOfUser(activityId)
+	checkInLogs, err = h.DB.GetAllCheckInOfUser(activityId)
 	if err != nil {
-		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Can't get check-in logs")
 		return
 	}
