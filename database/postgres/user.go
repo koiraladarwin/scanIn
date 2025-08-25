@@ -8,75 +8,59 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-func (p *PostgresDB) CreateUser(u *models.User) (*models.User,error) {
+func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, error) {
 	var lastAutoID int
-	err := p.sql.QueryRow(`SELECT COALESCE(MAX(auto_id), 0) FROM users WHERE role = $1`, u.Role).Scan(&lastAutoID)
+	var user models.User
+
+	err := p.sql.QueryRow(`SELECT COALESCE(MAX(auto_id), 0) FROM users WHERE role = $1`, reqUser.Role).Scan(&lastAutoID)
 	if err != nil {
-		return nil,fmt.Errorf("failed to fetch latest auto_id: %w", err)
+		return nil, fmt.Errorf("failed to fetch latest auto_id: %w", err)
 	}
 
-	u.AutoId = lastAutoID + 1
+	autoId := lastAutoID + 1
 
 	query := `
-		INSERT INTO users (auto_id, full_name, image_url, position, company, role)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO users (auto_id, full_name, image_url, position, company, role,event_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 	err = p.sql.QueryRow(
 		query,
-		u.AutoId,
-		u.FullName,
-		u.Image_url,
-		u.Position,
-		u.Company,
-		u.Role,
-	).Scan(&u.ID)
+		autoId,
+		reqUser.FullName,
+		reqUser.Image_url,
+		reqUser.Position,
+		reqUser.Company,
+		reqUser.Role,
+		reqUser.EventId,
+	).Scan(&user.ID)
 
 	if isUniqueViolationError(err) {
-		return nil,db.ErrAlreadyExists
+		return nil, db.ErrAlreadyExists
 	}
+	user.FullName = reqUser.FullName
+	user.Company = reqUser.Company
+	user.Position = reqUser.Position
+	user.Image_url = reqUser.Image_url
+	user.AutoId = autoId
+	user.Role = reqUser.Role
+	user.EventId = reqUser.EventId
 
-	return u,err
+	return &user, err
 }
 
 func (p *PostgresDB) GetUser(id uuid.UUID) (*models.User, error) {
 	u := &models.User{}
-	query := `SELECT id, full_name, auto_id, image_url, position, company ,role FROM users WHERE id=$1`
-	err := p.sql.QueryRow(query, id).Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role)
+	query := `SELECT id, full_name, auto_id, image_url, position, company ,role,event_id FROM users WHERE id=$1`
+	err := p.sql.QueryRow(query, id).Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role, &u.EventId)
 	return u, err
 }
 
-func (p *PostgresDB) GetUserByAttendeeid(Attendeeid uuid.UUID) (*models.User, error) {
-	u := &models.User{}
-
-	a, err := p.GetAttendee(Attendeeid)
-	if err != nil {
-		return nil, err
-	}
-	query := `SELECT id, full_name, auto_id, image_url, position, company,role FROM users WHERE id=$1`
-	err = p.sql.QueryRow(query, a.UserID).Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role)
-	return u, err
-}
-
-// func (p *PostgresDB) UpdateUser(u *models.User) error {
-// 	query := `UPDATE users SET full_name=$1, email=$2, phone=$3 WHERE id=$5`
-// 	_, err := p.sql.Exec(query, u.FullName, u.Email, u.Phone, u.ID)
-// 	return err
-// }
-//
-// func (p *PostgresDB) DeleteUser(id uuid.UUID) error {
-// 	_, err := p.sql.Exec(`DELETE FROM users WHERE id=$1`, id)
-// 	return err
-// }
-
-func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, error) {
-	var users []models.UserWithRole
+func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.User, error) {
+	var users []models.User
 
 	rows, err := p.sql.Query(`
-		SELECT u.id, u.full_name, u.auto_id, u.position, u.company,u.image_url, u.role, a.id
-		FROM attendees a
-		JOIN users u ON u.id = a.user_id
-		WHERE a.event_id = $1
+			SELECT id, full_name, auto_id, image_url, position, company ,role,event_id FROM users WHERE event_id = $1
 	`, eventID)
 	if err != nil {
 		return nil, err
@@ -84,8 +68,8 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 	defer rows.Close()
 
 	for rows.Next() {
-		var u models.UserWithRole
-		if err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Position, &u.Company, &u.Image_url, &u.Role, &u.AttendeeId); err != nil {
+		var u models.User
+		if err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role, &u.EventId); err != nil {
 			return nil, err
 		}
 		users = append(users, u)
@@ -94,22 +78,12 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.UserWithRole, 
 	return users, nil
 }
 
-func (p *PostgresDB) GetAllUsers() ([]models.User, error) {
-	rows, err := p.sql.Query(`SELECT id, full_name, auto_id, image_url, position, company,role FROM users `)
+func (p *PostgresDB) GetNumberOfUsersByEvent(eventID uuid.UUID) (int, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM users WHERE event_id = $1`
+	err := p.sql.QueryRow(query, eventID).Scan(&count)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	defer rows.Close()
-
-	var users []models.User
-	for rows.Next() {
-		var u models.User
-		err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, u)
-	}
-
-	return users, nil
+	return count, nil
 }

@@ -5,14 +5,13 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-// CreateActivity inserts a new activity into the database and returns its generated UUID
-func (p *PostgresDB) CreateActivity(a *models.Activity) error {
+func (p *PostgresDB) CreateActivity(a *models.ActivityRequest) error {
+  var id string
 	query := `INSERT INTO activities (event_id, name, type, start_time, end_time) 
 			  VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	return p.sql.QueryRow(query, a.EventID, a.Name, a.Type, a.StartTime, a.EndTime).Scan(&a.ID)
+	return p.sql.QueryRow(query, a.EventID, a.Name, a.Type, a.StartTime, a.EndTime).Scan(&id)
 }
 
-// GetActivity fetches a single activity by UUID
 func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
 	scannedUsers := 0
 	a := &models.Activity{}
@@ -26,48 +25,58 @@ func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
 	return a, err
 }
 
-// UpdateActivity updates an existing activity
 func (p *PostgresDB) UpdateActivity(a *models.Activity) error {
 	query := `UPDATE activities SET event_id=$1, name=$2, type=$3, start_time=$4, end_time=$5 WHERE id=$6`
 	_, err := p.sql.Exec(query, a.EventID, a.Name, a.Type, a.StartTime, a.EndTime, a.ID)
 	return err
 }
 
-// DeleteActivity deletes an activity by UUID
 func (p *PostgresDB) DeleteActivity(id uuid.UUID) error {
 	_, err := p.sql.Exec(`DELETE FROM activities WHERE id=$1`, id)
 	return err
 }
 
-// GetActivities By event_id
-func (p *PostgresDB) GetActivitiesByEvent(eventID uuid.UUID) ([]models.Activity, error) {
+
+func (p *PostgresDB) GetActivitiesByEvent(firebaseId string,eventID uuid.UUID) ([]models.Activity, error) {
 	activities := []models.Activity{}
-	query := `SELECT id, event_id, name, type, start_time, end_time FROM activities WHERE event_id = $1`
-	rows, err := p.sql.Query(query, eventID)
+
+	query := `
+SELECT
+  a.id,
+  a.event_id,
+  a.name,
+  a.type,
+  a.start_time,
+  a.end_time,
+  CASE
+   WHEN er.isCreator OR er.canSeeScanned THEN COALESCE(scanned.count, 0)
+  ELSE -1
+  END AS number_of_scanned_users
+FROM activities a
+JOIN eventRoles er ON er.event_id = a.event_id AND er.fireBaseId = $2
+LEFT JOIN (
+  SELECT activity_id, COUNT(*) AS count
+  FROM check_in_logs
+  WHERE status = 'checked'
+  GROUP BY activity_id
+) scanned ON scanned.activity_id = a.id
+WHERE a.event_id = $1
+`
+
+	rows, err := p.sql.Query(query, eventID, firebaseId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		scannedUsers := 0
-
 		var a models.Activity
-		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime); err != nil {
+		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime, &a.NumberOfScanedUsers); err != nil {
 			return nil, err
 		}
-
-	
-query := `SELECT COUNT(*) FROM check_in_logs WHERE activity_id = $1 AND status = 'checked'`
-		err = p.sql.QueryRow(query, a.ID).Scan(&scannedUsers)
-
-		if err != nil {
-			return nil, err
-		}
-		a.NumberOfScanedUsers = scannedUsers
-
 		activities = append(activities, a)
 	}
 
 	return activities, nil
 }
+	

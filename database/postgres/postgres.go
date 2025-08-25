@@ -35,7 +35,18 @@ func (p *PostgresDB) Close() error {
 
 func (p *PostgresDB) createTables() error {
 	stmts := []string{
-		`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`, // enables gen_random_uuid() in postgress sometimes it may not be active
+		`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`,
+
+		`CREATE TABLE IF NOT EXISTS events (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			name TEXT NOT NULL,
+			description TEXT,
+			start_time TIMESTAMP NOT NULL,
+			end_time TIMESTAMP NOT NULL,
+			location TEXT,
+      admin_code TEXT NOT NULL UNIQUE,
+      staff_code TEXT NOT NULL UNIQUE
+		);`,
 
 		`create table if not exists users (
 			id uuid primary key default gen_random_uuid(),
@@ -45,16 +56,8 @@ func (p *PostgresDB) createTables() error {
 			company text not null,
 			position text not null,
 			role text not null,
-      unique(role,auto_id)
-		);`,
-
-		`CREATE TABLE IF NOT EXISTS events (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			name TEXT NOT NULL,
-			description TEXT,
-			start_time TIMESTAMP NOT NULL,
-			end_time TIMESTAMP NOT NULL,
-			location TEXT
+			event_id UUID NOT NULL REFERENCES events(id),
+      unique(role,auto_id,event_id)
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS activities (
@@ -66,29 +69,34 @@ func (p *PostgresDB) createTables() error {
 			end_time TIMESTAMP NOT NULL
 		);`,
 
-		`CREATE TABLE IF NOT EXISTS attendees (
+		`CREATE TABLE IF NOT EXISTS eventRoles (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-      UNIQUE (user_id, event_id)
-		);`, //attendees are users in a event
+      event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE, 
+      fireBaseId text NOT NULL,
+      isCreator BOOLEAN NOT NULL DEFAULT false,
+      canSeeScanned BOOLEAN NOT NULL DEFAULT false,  
+      canCreateActivity BOOLEAN NOT NULL DEFAULT false,
+      canCreateAttendee BOOLEAN NOT NULL DEFAULT false,
+      canSeeAttendee BOOLEAN NOT NULL DEFAULT false,
+      UNIQUE (eventId, fireBaseId)
+		);`,
 
-		`CREATE TABLE IF NOT EXISTS staff (
+		`CREATE TABLE IF NOT EXISTS scanRoles (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			full_name TEXT NOT NULL,
-      password TEXT NOT NULL,
-			email TEXT UNIQUE NOT NULL,
-			phone TEXT
+      fireBaseId text NOT NULL,
+      activityId UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+      access BOOLEAN NOT NULL DEFAULT false,
+      UNIQUE (fireBaseId, activityId)
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS check_in_logs (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			attendee_id UUID NOT NULL REFERENCES attendees(id) ON DELETE CASCADE,
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
 			scanned_at TIMESTAMP NOT NULL DEFAULT now(),
 			status TEXT NOT NULL,
 			scanned_by TEXT NOT NULL ,
-      UNIQUE (attendee_id, activity_id)
+      UNIQUE (user_id, activity_id)
 		);`,
 	}
 
