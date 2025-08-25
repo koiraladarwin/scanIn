@@ -21,6 +21,7 @@ Returns:
 - 400 Bad Request for invalid input
 - 405 Method not allowed except POST
 - 409 Failed because User Exists already
+- 401 Unauthorized if user lacks event access
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {

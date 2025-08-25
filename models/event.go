@@ -40,7 +40,6 @@ type EventRequest struct {
 	StartTime           time.Time `json:"start_time"`
 	EndTime             time.Time `json:"end_time"`
 	Location            string    `json:"location"`
-	NumberOfParticipant int       `json:"number_of_participant"`
 }
 
 type EventInfo struct {
