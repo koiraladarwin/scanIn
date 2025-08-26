@@ -86,7 +86,6 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	// events, err := h.DB.GetAllEvents()
 	firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
-		log.Println("Unauthorized: no user in context")
 		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
 		return
 	}
