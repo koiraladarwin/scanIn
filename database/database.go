@@ -8,7 +8,7 @@ import (
 type Database interface {
 	CreateUser(*models.UserRequest) (*models.User, error)
 	GetUser(id uuid.UUID) (*models.User, error)
-	UpdateUser(user *models.User)  (error)
+	UpdateUser(user *models.UserModifyRequest)  (error)
 	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
 
 	CreateEvent(*models.EventCreateRequest) error

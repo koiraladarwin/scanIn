@@ -78,7 +78,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  var u models.User
+  var u models.UserModifyRequest
   if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
     utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
     return
