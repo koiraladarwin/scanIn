@@ -34,7 +34,7 @@ type Event struct {
 	StaffCode           *string   `json:"staff_code"`
 }
 
-type EventRequest struct {
+type EventCreateRequest struct {
 	Name                string    `json:"name"`
 	Description         string    `json:"description"`
 	StartTime           time.Time `json:"start_time"`

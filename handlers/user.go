@@ -71,6 +71,54 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+  fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+  if !ok {
+    http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+    return
+  }
+
+  var u models.User
+  if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+    utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+    return
+  }
+
+  access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
+
+  if err != nil {
+    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+    return
+  }
+
+  if !access {
+    utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+    return
+  }
+
+  if u.FullName == "" {
+    utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+    return
+  }
+
+  err = h.DB.UpdateUser(&u)
+
+  if errors.Is(err, db.ErrNotFound) {
+    utils.RespondWithError(w, http.StatusNotFound, "User Not Found")
+    return
+  }
+
+  if err != nil {
+    fmt.Print(err.Error())
+    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update user")
+    return
+  }
+
+  w.WriteHeader(http.StatusOK)
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(u)
+}
+
 /*
 Returns:
 - 200 OK with JSON array of attendees

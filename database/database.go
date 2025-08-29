@@ -8,9 +8,10 @@ import (
 type Database interface {
 	CreateUser(*models.UserRequest) (*models.User, error)
 	GetUser(id uuid.UUID) (*models.User, error)
+	UpdateUser(user *models.User)  (error)
 	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
 
-	CreateEvent(*models.EventRequest) error
+	CreateEvent(*models.EventCreateRequest) error
 	UpdateEvent(*models.Event) error
 	DeleteEvent(id uuid.UUID) error
 	EventExists(eventID uuid.UUID) (bool, error)
@@ -21,7 +22,7 @@ type Database interface {
 	GetEventByStaffId(id string) (*models.Event, error)
   GetStaffByEvent(eventId string) ([]models.Staff, error)
 
-	CreateActivity(*models.ActivityRequest) error
+	CreateActivity(*models.ActivityCreateRequest) error
 	GetActivity(id uuid.UUID) (*models.Activity, error)
 	UpdateActivity(*models.Activity) error
 	DeleteActivity(id uuid.UUID) error

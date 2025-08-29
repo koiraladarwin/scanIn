@@ -9,7 +9,7 @@ import (
 	"github.com/koiraladarwin/scanin/utils"
 )
 
-func (p *PostgresDB) CreateEvent(e *models.EventRequest) error {
+func (p *PostgresDB) CreateEvent(e *models.EventCreateRequest) error {
 	var id string
 	var staff_code = utils.RandomString(6)
 	var admin_code = utils.RandomString(7)

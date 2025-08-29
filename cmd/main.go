@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -67,6 +66,7 @@ func main() {
 	handler := handlers.New(db, fbAuth)
 
 	Router.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
+	Router.HandleFunc("/modifyuser", handler.CreateUser).Methods(constants.Put)
 	Router.HandleFunc("/users/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
 	Router.HandleFunc("/importusers/{event_id}", handler.ImportUser).Methods(constants.Post)
 
@@ -79,6 +79,7 @@ func main() {
 	Router.HandleFunc("/getstaffs/{event_id}", handler.GetStaffsByEvent).Methods(constants.Get)
 
 	Router.HandleFunc("/activity", handler.CreateActivity).Methods(constants.Post)
+	Router.HandleFunc("/modifyactivity", handler.UpdateActivity).Methods(constants.Put)
 
 	Router.HandleFunc("/checkins", handler.GetCheckIn).Methods(constants.Get)
 	Router.HandleFunc("/checkins/{event_id}", handler.GetCheckInByEventId).Methods(constants.Get)

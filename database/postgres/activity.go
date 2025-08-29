@@ -5,7 +5,7 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-func (p *PostgresDB) CreateActivity(a *models.ActivityRequest) error {
+func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) error {
   var id string
 	query := `INSERT INTO activities (event_id, name, type, start_time, end_time) 
 			  VALUES ($1, $2, $3, $4, $5) RETURNING id`

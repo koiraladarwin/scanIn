@@ -15,7 +15,7 @@ type Activity struct {
 	NumberOfScanedUsers int       `json:"number_of_scaned_users"`
 }
 
-type ActivityRequest struct {
+type ActivityCreateRequest struct {
 	EventID             uuid.UUID `json:"event_id"`
 	Name                string    `json:"name"`     
 	Type                string    `json:"type"`    
@@ -23,3 +23,5 @@ type ActivityRequest struct {
 	EndTime             time.Time `json:"end_time"`
 	NumberOfScanedUsers int       `json:"number_of_scaned_users"`
 }
+
+

@@ -19,7 +19,7 @@ Returns:
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
-	var c models.EventRequest
+	var c models.EventCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
