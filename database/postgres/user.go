@@ -51,7 +51,7 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 
 func (p *PostgresDB) GetUser(id uuid.UUID) (*models.User, error) {
 	u := &models.User{}
-	query := `SELECT id, full_name, auto_id, image_url, position, company ,role,event_id FROM users WHERE id=$1`
+	query := `SELECT id, full_name, auto_id, image_url, position, company ,role,event_id FROM users WHERE id=$1 WHERE delete_at IS NULL`
 	err := p.sql.QueryRow(query, id).Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.Role, &u.EventId)
 	return u, err
 }
@@ -60,7 +60,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.User, error) {
 	var users []models.User
 
 	rows, err := p.sql.Query(`
-			SELECT id, full_name, auto_id, image_url, position, company ,role,event_id FROM users WHERE event_id = $1
+			SELECT id, full_name, auto_id, image_url, position, company ,role,event_id FROM users WHERE event_id = $1 WHERE delete_at IS NULL
 	`, eventID)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (p *PostgresDB) GetUsersByEvent(eventID uuid.UUID) ([]models.User, error) {
 
 func (p *PostgresDB) GetNumberOfUsersByEvent(eventID uuid.UUID) (int, error) {
 	var count int
-	query := `SELECT COUNT(*) FROM users WHERE event_id = $1`
+	query := `SELECT COUNT(*) FROM users WHERE event_id = $1 WHERE delete_at IS NULL`
 	err := p.sql.QueryRow(query, eventID).Scan(&count)
 	if err != nil {
 		return 0, err

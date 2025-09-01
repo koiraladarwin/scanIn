@@ -44,7 +44,7 @@ SELECT
 FROM events e
 JOIN eventRoles er ON e.id = er.event_id
 LEFT JOIN users u ON u.event_id = e.id
-WHERE er.fireBaseId = $1
+WHERE er.fireBaseId = $1 AND e.delete_at IS NULL
 GROUP BY e.id, e.name, e.description, e.start_time, e.end_time, e.location;
 
 `
@@ -66,7 +66,7 @@ GROUP BY e.id, e.name, e.description, e.start_time, e.end_time, e.location;
 			&e.Location,
 			&e.NumberOfStaff,
 			&e.StaffCode,
-			&e.NumberOfParticipant, // Make sure this field exists in your models.Event
+			&e.NumberOfParticipant, 
 		); err != nil {
 			return nil, err
 		}
@@ -101,7 +101,7 @@ SELECT
   END AS number_of_participant
 FROM events e
 JOIN eventRoles er ON e.id = er.event_id
-WHERE e.id = $1 AND er.fireBaseId = $2
+WHERE e.id = $1 AND er.fireBaseId = $2 AND e.delete_at IS NULL
 `
 
 	err := p.sql.QueryRow(query, eventId, firebaseId).Scan(
@@ -124,14 +124,14 @@ WHERE e.id = $1 AND er.fireBaseId = $2
 
 func (p *PostgresDB) GetEventByStaffId(id string) (*models.Event, error) {
 	e := &models.Event{}
-	query := `SELECT id, name, description, start_time, end_time, location FROM events WHERE staff_code = $1`
+	query := `SELECT id, name, description, start_time, end_time, location FROM events WHERE staff_code = $1 AND delete_at IS NULL`
 	err := p.sql.QueryRow(query, id).Scan(&e.ID, &e.Name, &e.Description, &e.StartTime, &e.EndTime, &e.Location)
 	return e, err
 }
 
 func (p *PostgresDB) GetEventByAdminId(id string) (*models.Event, error) {
 	e := &models.Event{}
-	query := `SELECT id, name, description, start_time, end_time, location FROM events WHERE admin_code = $1`
+	query := `SELECT id, name, description, start_time, end_time, location FROM events WHERE admin_code = $1 And delete_at IS NULL`
 	err := p.sql.QueryRow(query, id).Scan(&e.ID, &e.Name, &e.Description, &e.StartTime, &e.EndTime, &e.Location)
 	return e, err
 }
@@ -149,13 +149,13 @@ func (p *PostgresDB) DeleteEvent(id uuid.UUID) error {
 
 func (p *PostgresDB) EventExists(eventID uuid.UUID) (bool, error) {
 	var exists bool
-	query := `SELECT EXISTS(SELECT 1 FROM events WHERE id = $1)`
+	query := `SELECT EXISTS(SELECT 1 FROM events WHERE id = $1 AND delete_at IS NULL)`
 	err := p.sql.QueryRow(query, eventID).Scan(&exists)
 	return exists, err
 }
 
 func (p *PostgresDB) GetAllEvents() ([]models.Event, error) {
-	query := `SELECT id, name, description, start_time, end_time, location FROM events ORDER BY start_time`
+	query := `SELECT id, name, description, start_time, end_time, location FROM events ORDER BY start_time WHERE delete_at IS NULL`
 
 	rows, err := p.sql.Query(query)
 	if err != nil {
