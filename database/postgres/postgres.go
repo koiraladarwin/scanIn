@@ -45,7 +45,8 @@ func (p *PostgresDB) createTables() error {
 			end_time TIMESTAMP NOT NULL,
 			location TEXT,
       admin_code TEXT NOT NULL UNIQUE,
-      staff_code TEXT NOT NULL UNIQUE
+      staff_code TEXT NOT NULL UNIQUE,
+			delete_at TIMESTAMP
 		);`,
 
 		`create table if not exists users (
@@ -57,7 +58,8 @@ func (p *PostgresDB) createTables() error {
 			position text not null,
 			role text not null,
 			event_id UUID NOT NULL REFERENCES events(id),
-      unique(role,auto_id,event_id)
+      unique(role,auto_id,event_id),
+			delete_at TIMESTAMP	
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS activities (
@@ -66,7 +68,8 @@ func (p *PostgresDB) createTables() error {
 			name TEXT NOT NULL,
 			type TEXT NOT NULL,
 			start_time TIMESTAMP NOT NULL,
-			end_time TIMESTAMP NOT NULL
+			end_time TIMESTAMP NOT NULL,
+			delete_at TIMESTAMP
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS eventRoles (

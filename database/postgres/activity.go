@@ -15,7 +15,7 @@ func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) error {
 func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
 	scannedUsers := 0
 	a := &models.Activity{}
-	query := `SELECT id, event_id, name, type, start_time, end_time FROM activities WHERE id = $1`
+	query := `SELECT id, event_id, name, type, start_time, end_time FROM activities WHERE id = $1 AND delete_at IS NULL`
 	err := p.sql.QueryRow(query, id).Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,6 @@ func (p *PostgresDB) DeleteActivity(id uuid.UUID) error {
 	_, err := p.sql.Exec(`DELETE FROM activities WHERE id=$1`, id)
 	return err
 }
-
 
 func (p *PostgresDB) GetActivitiesByEvent(firebaseId string,eventID uuid.UUID) ([]models.Activity, error) {
 	activities := []models.Activity{}
@@ -60,7 +59,7 @@ LEFT JOIN (
   WHERE status = 'checked'
   GROUP BY activity_id
 ) scanned ON scanned.activity_id = a.id
-WHERE a.event_id = $1
+WHERE a.event_id = $1 AND a.delete_at IS NULL;
 `
 
 	rows, err := p.sql.Query(query, eventID, firebaseId)
