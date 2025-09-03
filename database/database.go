@@ -12,7 +12,7 @@ type Database interface {
 	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
 
 	CreateEvent(*models.EventCreateRequest) error
-	UpdateEvent(*models.Event) error
+	UpdateEvent(*models.EventModifyRequest) error
 	DeleteEvent(id uuid.UUID) error
 	EventExists(eventID uuid.UUID) (bool, error)
 	GetAllEvents() ([]models.Event, error)

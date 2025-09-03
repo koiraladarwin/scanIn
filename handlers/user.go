@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -72,51 +73,51 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-  fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
-  if !ok {
-    http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
-    return
-  }
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
 
-  var u models.UserModifyRequest
-  if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
-    utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-    return
-  }
+	var u models.UserModifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
 
-  access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
+	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
 
-  if err != nil {
-    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-    return
-  }
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
 
-  if !access {
-    utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-    return
-  }
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+		return
+	}
 
-  if u.FullName == "" {
-    utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-    return
-  }
+	if u.FullName == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
 
-  err = h.DB.UpdateUser(&u)
+	err = h.DB.UpdateUser(&u)
 
-  if errors.Is(err, db.ErrNotFound) {
-    utils.RespondWithError(w, http.StatusNotFound, "User Not Found")
-    return
-  }
+	if errors.Is(err, db.ErrNotFound) {
+		utils.RespondWithError(w, http.StatusNotFound, "User Not Found")
+		return
+	}
 
-  if err != nil {
-    fmt.Print(err.Error())
-    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update user")
-    return
-  }
+	if err != nil {
+		fmt.Print(err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update user")
+		return
+	}
 
-  w.WriteHeader(http.StatusOK)
-  w.Header().Set("Content-Type", "application/json")
-  json.NewEncoder(w).Encode(u)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(u)
 }
 
 /*
@@ -143,14 +144,14 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	access, err := h.DB.CanSeeAttendee(fireBaseUser.UID, eventIDStr)
 
-if err != nil {
-	utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-	return
-}
-if !access {
-	utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-	return
-}
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+		return
+	}
 
 	exists, err := h.DB.EventExists(eventID)
 	if err != nil {
@@ -165,6 +166,7 @@ if !access {
 
 	attendees, err := h.DB.GetUsersByEvent(eventID)
 	if err != nil {
+    log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed to fetch attendees")
 		return
 	}
@@ -196,13 +198,13 @@ func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
 	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, streventID)
 
 	if err != nil {
-	utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-	return
-}
-if !access {
-	utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-	return
-}
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+		return
+	}
 
 	failedLog := []string{}
 	if err := r.ParseMultipartForm(10 << 20); err != nil {

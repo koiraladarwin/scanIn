@@ -71,6 +71,7 @@ func main() {
 	Router.HandleFunc("/importusers/{event_id}", handler.ImportUser).Methods(constants.Post)
 
 	Router.HandleFunc("/event", handler.CreateEvent).Methods(constants.Post)
+	Router.HandleFunc("/modifyevent", handler.ModifyEvent).Methods(constants.Put)
 	Router.HandleFunc("/event", handler.GetEvent).Methods(constants.Get)
 	Router.HandleFunc("/eventinfo", handler.GetEventInfo).Methods(constants.Get)
 	Router.HandleFunc("/addeventwithcode/{code}", handler.AddEventWithEventCode).Methods(constants.Post)

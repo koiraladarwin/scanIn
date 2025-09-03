@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -33,6 +35,26 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(c)
 }
 
+func (h *Handler) ModifyEvent(w http.ResponseWriter, r *http.Request) {
+	var c models.EventModifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
+	if err := h.DB.UpdateEvent(&c); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.RespondWithError(w, http.StatusNotFound, "Event not found")
+			return
+		}
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to modify Event")
+    log.Println("Failed to modify Event:", err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(c)
+}
+
 func (h *Handler) AddEventWithEventCode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	code := vars["code"]
@@ -58,7 +80,7 @@ func (h *Handler) AddEventWithEventCode(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err != nil {
-    log.Println("Failed to fetch event by code:", err.Error())
+		log.Println("Failed to fetch event by code:", err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event by code")
 		return
 	}
@@ -69,7 +91,7 @@ func (h *Handler) AddEventWithEventCode(w http.ResponseWriter, r *http.Request) 
 
 	err = h.DB.AddStaffToEvent(fireBaseUser.UID, event.ID.String())
 	if err != nil {
-    log.Println("Failed to fetch event by code:2", err.Error())
+		log.Println("Failed to fetch event by code:2", err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add staff to event")
 		return
 	}
@@ -130,7 +152,7 @@ func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 
 	event, err := h.DB.GetEventByFirebaseUser(fireBaseUser.UID, eventID)
 	if err != nil {
-    log.Println("Failed to fetch event:", err)
+		log.Println("Failed to fetch event:", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event: "+err.Error())
 		return
 	}
@@ -141,7 +163,7 @@ func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 
 	activities, err := h.DB.GetActivitiesByEvent(fireBaseUser.UID, eventID)
 	if err != nil {
-    log.Println("Failed to fetch event1 :", err)
+		log.Println("Failed to fetch event1 :", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activities: "+err.Error())
 		return
 	}
@@ -155,4 +177,3 @@ func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
-
