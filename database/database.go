@@ -8,8 +8,9 @@ import (
 type Database interface {
 	CreateUser(*models.UserRequest) (*models.User, error)
 	GetUser(id uuid.UUID) (*models.User, error)
-	UpdateUser(user *models.UserModifyRequest)  (error)
+	UpdateUser(user *models.UserModifyRequest) error
 	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
+	DeleteUser(id uuid.UUID) error
 
 	CreateEvent(*models.EventCreateRequest) error
 	UpdateEvent(*models.Event) error
@@ -20,7 +21,7 @@ type Database interface {
 	GetEventByFirebaseUser(firebaseId string, eventId uuid.UUID) (*models.Event, error)
 	GetEventByAdminId(id string) (*models.Event, error)
 	GetEventByStaffId(id string) (*models.Event, error)
-  GetStaffByEvent(eventId string) ([]models.Staff, error)
+	GetStaffByEvent(eventId string) ([]models.Staff, error)
 
 	CreateActivity(*models.ActivityCreateRequest) error
 	GetActivity(id uuid.UUID) (*models.Activity, error)

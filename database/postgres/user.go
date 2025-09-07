@@ -49,10 +49,16 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 	return &user, err
 }
 
-func (p *PostgresDB)UpdateUser(u *models.UserModifyRequest) error {
-  query := `UPDATE users SET full_name=$1, image_url=$2, position=$3, company=$4, role=$5 WHERE id=$6`
-  _, err := p.sql.Exec(query, u.FullName, u.Image_url, u.Position, u.Company, u.Role, u.ID)
-  return err
+func (p *PostgresDB) UpdateUser(u *models.UserModifyRequest) error {
+	query := `UPDATE users SET full_name=$1, image_url=$2, position=$3, company=$4, role=$5 WHERE id=$6`
+	_, err := p.sql.Exec(query, u.FullName, u.Image_url, u.Position, u.Company, u.Role, u.ID)
+	return err
+}
+
+func (p *PostgresDB) DeleteUser(id uuid.UUID) error {
+	query := `UPDATE users SET delete_at=NOW() WHERE id=$1`
+	_, err := p.sql.Exec(query, id)
+	return err
 }
 
 func (p *PostgresDB) GetUser(id uuid.UUID) (*models.User, error) {

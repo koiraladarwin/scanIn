@@ -66,7 +66,9 @@ func main() {
 	handler := handlers.New(db, fbAuth)
 
 	Router.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
+	Router.HandleFunc("/user", handler.CreateUser).Methods(constants.Get)
 	Router.HandleFunc("/modifyuser", handler.UpdateUser).Methods(constants.Put)
+	Router.HandleFunc("/deleteuser", handler.DeleteUser).Methods(constants.Delete)
 	Router.HandleFunc("/users/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
 	Router.HandleFunc("/importusers/{event_id}", handler.ImportUser).Methods(constants.Post)
 

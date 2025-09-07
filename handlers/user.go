@@ -72,51 +72,51 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-  fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
-  if !ok {
-    http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
-    return
-  }
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
 
-  var u models.UserModifyRequest
-  if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
-    utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-    return
-  }
+	var u models.UserModifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
 
-  access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
+	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
 
-  if err != nil {
-    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-    return
-  }
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
 
-  if !access {
-    utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-    return
-  }
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+		return
+	}
 
-  if u.FullName == "" {
-    utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-    return
-  }
+	if u.FullName == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
 
-  err = h.DB.UpdateUser(&u)
+	err = h.DB.UpdateUser(&u)
 
-  if errors.Is(err, db.ErrNotFound) {
-    utils.RespondWithError(w, http.StatusNotFound, "User Not Found")
-    return
-  }
+	if errors.Is(err, db.ErrNotFound) {
+		utils.RespondWithError(w, http.StatusNotFound, "User Not Found")
+		return
+	}
 
-  if err != nil {
-    fmt.Print(err.Error())
-    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update user")
-    return
-  }
+	if err != nil {
+		fmt.Print(err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update user")
+		return
+	}
 
-  w.WriteHeader(http.StatusOK)
-  w.Header().Set("Content-Type", "application/json")
-  json.NewEncoder(w).Encode(u)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(u)
 }
 
 /*
@@ -143,14 +143,14 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	access, err := h.DB.CanSeeAttendee(fireBaseUser.UID, eventIDStr)
 
-if err != nil {
-	utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-	return
-}
-if !access {
-	utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-	return
-}
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+		return
+	}
 
 	exists, err := h.DB.EventExists(eventID)
 	if err != nil {
@@ -196,13 +196,13 @@ func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
 	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, streventID)
 
 	if err != nil {
-	utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-	return
-}
-if !access {
-	utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-	return
-}
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+		return
+	}
 
 	failedLog := []string{}
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
@@ -272,4 +272,86 @@ if !access {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(failedLog)
 
+}
+
+func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	_, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+	userID := r.URL.Query().Get("attendee_id")
+	if userID == "" {
+		http.Error(w, "Missing user ID", http.StatusBadRequest)
+		return
+	}
+	eventID := r.URL.Query().Get("event_id")
+	if eventID == "" {
+		http.Error(w, "Missing event ID", http.StatusBadRequest)
+		return
+	}
+
+	access, err := h.DB.IsCreator(userID, eventID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+		return
+	}
+
+	if !access {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+		return
+	}
+
+	uuidUser, err := uuid.Parse(userID)
+	if err != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	err = h.DB.DeleteUser(uuidUser)
+	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+}
+
+func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	_, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "Missing user ID", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.DB.GetUser(userID)
+	if errors.Is(err, db.ErrNotFound) {
+		utils.RespondWithError(w, http.StatusNotFound, "User Not Found")
+		return
+	}
+
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch user")
+		return
+	}
+
+	// access, err := h.DB.CanSeeAttendee(fireBaseUser.UID, user.EventId)
+	// if err != nil {
+	// 	utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
+	// 	return
+	// }
+	// if !access {
+	// 	utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
+	// 	return
+	// }
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }
