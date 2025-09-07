@@ -66,7 +66,7 @@ GROUP BY e.id, e.name, e.description, e.start_time, e.end_time, e.location;
 			&e.Location,
 			&e.NumberOfStaff,
 			&e.StaffCode,
-			&e.NumberOfParticipant, 
+			&e.NumberOfParticipant,
 		); err != nil {
 			return nil, err
 		}
@@ -136,9 +136,9 @@ func (p *PostgresDB) GetEventByAdminId(id string) (*models.Event, error) {
 	return e, err
 }
 
-func (p *PostgresDB) UpdateEvent(e *models.Event) error {
-	query := `UPDATE events SET name=$1, description=$2, start_time=$3, end_time=$4, location=$5 WHERE id=$6`
-	_, err := p.sql.Exec(query, e.Name, e.Description, e.StartTime, e.EndTime, e.Location, e.ID)
+func (p *PostgresDB) UpdateEvent(e *models.EventModifyRequest) error {
+	query := `UPDATE events SET name=$1, description=$2,location=$3 WHERE id=$4`
+	_, err := p.sql.Exec(query, e.Name, e.Description, e.Location, e.ID)
 	return err
 }
 

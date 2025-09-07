@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -165,6 +166,7 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	attendees, err := h.DB.GetUsersByEvent(eventID)
 	if err != nil {
+    log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed to fetch attendees")
 		return
 	}

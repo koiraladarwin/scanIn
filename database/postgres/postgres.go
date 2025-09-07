@@ -41,12 +41,12 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			name TEXT NOT NULL,
 			description TEXT,
-			start_time TIMESTAMP NOT NULL,
-			end_time TIMESTAMP NOT NULL,
+			start_time TIMESTAMPZ NOT NULL,
+			end_time TIMESTAMPZ NOT NULL,
 			location TEXT,
       admin_code TEXT NOT NULL UNIQUE,
       staff_code TEXT NOT NULL UNIQUE,
-			delete_at TIMESTAMP
+			delete_at TIMESTAMPZ
 		);`,
 
 		`create table if not exists users (
@@ -59,7 +59,7 @@ func (p *PostgresDB) createTables() error {
 			role text not null,
 			event_id UUID NOT NULL REFERENCES events(id),
       unique(role,auto_id,event_id),
-			delete_at TIMESTAMP	
+			delete_at TIMESTAMPZ
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS activities (
@@ -67,9 +67,9 @@ func (p *PostgresDB) createTables() error {
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
 			name TEXT NOT NULL,
 			type TEXT NOT NULL,
-			start_time TIMESTAMP NOT NULL,
-			end_time TIMESTAMP NOT NULL,
-			delete_at TIMESTAMP
+			start_time TIMESTAMPZ NOT NULL,
+			end_time TIMESTAMPZ NOT NULL,
+			delete_at TIMESTAMPZ
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS eventRoles (
