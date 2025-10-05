@@ -12,7 +12,9 @@ type Database interface {
 	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
 	DeleteUser(id uuid.UUID) error
 
-	CreateEvent(*models.EventCreateRequest) error
+	CreateEventCategory(*models.EventCategoryRequest) (models.EventCategory, error)
+  GetEventCategories(firebase_id string) ([]models.EventCategory, error)
+	CreateEvent(*models.EventCreateRequest) (models.Event, error)
 	UpdateEvent(*models.EventModifyRequest) error
 	DeleteEvent(id uuid.UUID) error
 	EventExists(eventID uuid.UUID) (bool, error)

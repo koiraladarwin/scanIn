@@ -37,69 +37,90 @@ func (p *PostgresDB) createTables() error {
 	stmts := []string{
 		`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`,
 
+		// 1. Events category table
+		`CREATE TABLE IF NOT EXISTS event_category(
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
+     firebase_id TEXT,
+     tag TEXT NOT NULL,
+     description TEXT,
+     deleted_at TIMESTAMPTZ
+    );`,
+
+		// 1. Events table
 		`CREATE TABLE IF NOT EXISTS events (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      firebase_id TEXT,
+      event_category_id UUID REFERENCES event_category(id) ON DELETE SET NULL,
 			name TEXT NOT NULL,
 			description TEXT,
-			start_time TIMESTAMPZ NOT NULL,
-			end_time TIMESTAMPZ NOT NULL,
+			start_time TIMESTAMPTZ NOT NULL,
+			end_time TIMESTAMPTZ NOT NULL,
 			location TEXT,
-      admin_code TEXT NOT NULL UNIQUE,
-      staff_code TEXT NOT NULL UNIQUE,
-			delete_at TIMESTAMPZ
+			admin_code TEXT NOT NULL UNIQUE,
+			staff_code TEXT NOT NULL UNIQUE,
+			deleted_at TIMESTAMPTZ
 		);`,
 
-		`create table if not exists users (
-			id uuid primary key default gen_random_uuid(),
-      auto_id int not null,
-			full_name text not null,
-      image_url text not null,
-			company text not null,
-			position text not null,
-			role text not null,
-			event_id UUID NOT NULL REFERENCES events(id),
-      unique(role,auto_id,event_id),
-			delete_at TIMESTAMPZ
+		// 2. Users table
+		`CREATE TABLE IF NOT EXISTS users (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			auto_id INT NOT NULL,
+			full_name TEXT NOT NULL,
+			image_url TEXT NOT NULL,
+			company TEXT NOT NULL,
+			position TEXT NOT NULL,
+			role TEXT NOT NULL,
+			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+			UNIQUE (role, auto_id, event_id),
+			deleted_at TIMESTAMPTZ
 		);`,
 
+		// 3. Ticket table (must come before attendee)
+		`CREATE TABLE IF NOT EXISTS ticket (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+			price NUMERIC NOT NULL,
+			deleted_at TIMESTAMPTZ
+		);`,
+
+		// 4. Attendee table
+		`CREATE TABLE IF NOT EXISTS attendee (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+			ticket_id UUID REFERENCES ticket(id) ON DELETE SET NULL,
+			deleted_at TIMESTAMPTZ
+		);`,
+
+		// 5. Activities table
 		`CREATE TABLE IF NOT EXISTS activities (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
 			name TEXT NOT NULL,
 			type TEXT NOT NULL,
-			start_time TIMESTAMPZ NOT NULL,
-			end_time TIMESTAMPZ NOT NULL,
-			delete_at TIMESTAMPZ
+			start_time TIMESTAMPTZ NOT NULL,
+			end_time TIMESTAMPTZ NOT NULL,
+			deleted_at TIMESTAMPTZ
 		);`,
 
-		`CREATE TABLE IF NOT EXISTS eventRoles (
+		// 7. Scan roles table
+		`CREATE TABLE IF NOT EXISTS scan_roles (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE, 
-      fireBaseId text NOT NULL,
-      isCreator BOOLEAN NOT NULL DEFAULT false,
-      canSeeScanned BOOLEAN NOT NULL DEFAULT false,  
-      canCreateActivity BOOLEAN NOT NULL DEFAULT false,
-      canCreateAttendee BOOLEAN NOT NULL DEFAULT false,
-      canSeeAttendee BOOLEAN NOT NULL DEFAULT false,
-      UNIQUE (eventId, fireBaseId)
+			firebase_id TEXT NOT NULL,
+			activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+			access BOOLEAN NOT NULL DEFAULT false,
+			UNIQUE (firebase_id, activity_id)
 		);`,
 
-		`CREATE TABLE IF NOT EXISTS scanRoles (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      fireBaseId text NOT NULL,
-      activityId UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-      access BOOLEAN NOT NULL DEFAULT false,
-      UNIQUE (fireBaseId, activityId)
-		);`,
-
+		// 8. Check-in logs table
 		`CREATE TABLE IF NOT EXISTS check_in_logs (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			attendee_id UUID NOT NULL REFERENCES attendee(id) ON DELETE CASCADE,
 			activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-			scanned_at TIMESTAMP NOT NULL DEFAULT now(),
+			scanned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			status TEXT NOT NULL,
-			scanned_by TEXT NOT NULL ,
-      UNIQUE (user_id, activity_id)
+			scanned_by TEXT NOT NULL,
+			UNIQUE (attendee_id, activity_id)
 		);`,
 	}
 

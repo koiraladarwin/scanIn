@@ -71,7 +71,9 @@ func main() {
 	Router.HandleFunc("/deleteuser", handler.DeleteUser).Methods(constants.Delete)
 	Router.HandleFunc("/users/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
 	Router.HandleFunc("/importusers/{event_id}", handler.ImportUser).Methods(constants.Post)
-
+  
+  Router.HandleFunc("/eventcategory", handler.CreateEventCategory).Methods(constants.Post)  
+  Router.HandleFunc("/eventcategories", handler.GetEventCategories).Methods(constants.Get)
 	Router.HandleFunc("/event", handler.CreateEvent).Methods(constants.Post)
 	Router.HandleFunc("/modifyevent", handler.ModifyEvent).Methods(constants.Put)
 	Router.HandleFunc("/event", handler.GetEvent).Methods(constants.Get)

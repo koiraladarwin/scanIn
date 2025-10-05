@@ -14,6 +14,50 @@ import (
 	"github.com/koiraladarwin/scanin/utils"
 )
 
+func (h *Handler) CreateEventCategory(w http.ResponseWriter, r *http.Request) {
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: no user in context")
+		return
+	}
+	var c models.EventCategoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
+  c.FirebaseID = fireBaseUser.UID
+	createdCategory, err := h.DB.CreateEventCategory(&c)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create Event Category")
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(createdCategory)
+}
+
+func (h *Handler) GetEventCategories(w http.ResponseWriter, r *http.Request) {
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: no user in context")
+		return
+	}
+	log.Print("firebase user uid", fireBaseUser.UID)
+	category, err := h.DB.GetEventCategories(fireBaseUser.UID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event category")
+		return
+	}
+
+	if category == nil {
+		utils.RespondWithError(w, http.StatusNotFound, "Event category not found")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(category)
+}
+
 /*
 Returns:
 - 201 Created with created check-in JSON on success
@@ -21,12 +65,22 @@ Returns:
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: no user in context")
+		return
+	}
+
 	var c models.EventCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-	if err := h.DB.CreateEvent(&c); err != nil {
+	c.FirebaseID = fireBaseUser.UID
+	log.Print("create event request: ", c)
+	log.Print("firebase user uid", fireBaseUser.UID)
+	_, err := h.DB.CreateEvent(&c)
+	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create Event")
 		return
 	}
@@ -47,7 +101,7 @@ func (h *Handler) ModifyEvent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to modify Event")
-    log.Println("Failed to modify Event:", err.Error())
+		log.Println("Failed to modify Event:", err.Error())
 		return
 	}
 

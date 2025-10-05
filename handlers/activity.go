@@ -30,8 +30,6 @@ Returns:
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateActivity(w http.ResponseWriter, r *http.Request) {
-	//todo
-	//change this route so only super admin and event creator can create activity
 	firebaseId, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
 		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")

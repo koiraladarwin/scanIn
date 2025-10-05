@@ -22,8 +22,25 @@ type Attendee struct {
 	EventID uuid.UUID `json:"event_id"`
 }
 
+type EventCategoryRequest struct {
+	FirebaseID  string     `json:"firebase_id"`
+	Tag         string     `json:"tag"`
+	Description string     `json:"description"`
+	DeletedAt   *time.Time `json:"deleted_at"`
+}
+
+type EventCategory struct {
+	ID          uuid.UUID  `json:"id"`
+	Tag         string     `json:"tag"`
+	FirebaseID  string     `json:"firebase_id"`
+	Description string     `json:"description"`
+	DeletedAt   *time.Time `json:"deleted_at"`
+}
+
 type Event struct {
 	ID                  uuid.UUID `json:"id"`
+	FirebaseID          string    `json:"firebase_id"`
+	EventCategoryID     uuid.UUID `json:"event_category_id"`
 	Name                string    `json:"name"`
 	Description         string    `json:"description"`
 	StartTime           time.Time `json:"start_time"`
@@ -32,10 +49,13 @@ type Event struct {
 	NumberOfParticipant int       `json:"number_of_participant"`
 	NumberOfStaff       int       `json:"number_of_staff"`
 	StaffCode           *string   `json:"staff_code"`
+	AdminCode           *string   `json:"admin_code"`
 }
 
 type EventCreateRequest struct {
 	Name                string    `json:"name"`
+	EventCategoryID     uuid.UUID `json:"event_category_id"`
+	FirebaseID          string    `json:"firebase_id"`
 	Description         string    `json:"description"`
 	StartTime           time.Time `json:"start_time"`
 	EndTime             time.Time `json:"end_time"`
@@ -44,10 +64,10 @@ type EventCreateRequest struct {
 }
 
 type EventModifyRequest struct {
-	ID                  uuid.UUID `json:"id"`
-	Name                string    `json:"name"`
-	Description         string    `json:"description"`
-	Location            string    `json:"location"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Location    string    `json:"location"`
 }
 
 type EventInfo struct {
