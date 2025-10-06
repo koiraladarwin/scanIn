@@ -55,6 +55,8 @@ type Database interface {
 	ModifyEventRole(role models.EditRoleRequest) error
 
 	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
+	CreateAttendeeCategory(a models.AttendeeCategory) (models.AttendeeCategory, error)
+	GetAttendeeCategories(firebaseId string) ([]models.AttendeeCategory, error)
 
 	CreateTicket(a models.TicketRequest) (models.Ticket, error)
 	CreateTicketCategory(a models.TicketCategory) (models.TicketCategory, error)

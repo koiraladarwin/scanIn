@@ -73,6 +73,8 @@ func main() {
 	Router.HandleFunc("/users/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
   
   Router.HandleFunc("/enrollattendee", handler.CreateAttendee).Methods(constants.Post)
+  Router.HandleFunc("/attendeecategory", handler.CreateAttendeeCategory).Methods(constants.Post) 
+  Router.HandleFunc("/attendeecategories", handler.GetAttendeeCategories).Methods(constants.Get)
 
   Router.HandleFunc("/ticket", handler.CreateTicket).Methods(constants.Post) 
   Router.HandleFunc("/ticketcategory", handler.CreateTicketCategory).Methods(constants.Post) 
