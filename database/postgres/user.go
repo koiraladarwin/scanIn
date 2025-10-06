@@ -45,7 +45,7 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 
 	query := `
 		INSERT INTO users (auto_id, full_name, image_url, position, company, users_category_id,firebase_id)
-		VALUES ($1, $2, $3, $4, $5, $6,$7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 	err = p.sql.QueryRow(
@@ -56,7 +56,7 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 		reqUser.Position,
 		reqUser.Company,
 		reqUser.UsersCategoryID,
-    reqUser.FirebaseID,
+		reqUser.FirebaseID,
 	).Scan(&user.ID)
 
 	if isUniqueViolationError(err) {

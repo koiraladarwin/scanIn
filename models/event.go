@@ -16,12 +16,6 @@ type UserWithRole struct {
 	Role       string    `json:"role"`
 }
 
-type Attendee struct {
-	ID      uuid.UUID `json:"id"`
-	UserID  uuid.UUID `json:"user_id"`
-	EventID uuid.UUID `json:"event_id"`
-}
-
 type EventCategoryRequest struct {
 	FirebaseID  string     `json:"firebase_id"`
 	Tag         string     `json:"tag"`

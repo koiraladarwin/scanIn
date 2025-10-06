@@ -55,5 +55,6 @@ type Database interface {
 	AddEventRole(role models.RoleRequest) error
 	ModifyEventRole(role models.EditRoleRequest) error
 
+	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
 	Close() error
 }
