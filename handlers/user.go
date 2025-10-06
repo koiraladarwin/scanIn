@@ -13,8 +13,45 @@ import (
 	"github.com/koiraladarwin/scanin/features/firebaseauth"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
-	"github.com/xuri/excelize/v2"
 )
+
+func (h *Handler) CreateUserCategory(w http.ResponseWriter, r *http.Request) {
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
+	var u models.UsersCategoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
+
+	if u.Tag == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
+
+	u.FirebaseID = fireBaseUser.UID
+
+	userCat, err := h.DB.CreateUserCategory(&u)
+
+	if errors.Is(err, db.ErrAlreadyExists) {
+		utils.RespondWithError(w, http.StatusConflict, "User Category Already Exists")
+		return
+	}
+
+	if err != nil {
+		fmt.Print(err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create user category")
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(userCat)
+}
 
 /*
 Returns:
@@ -25,7 +62,6 @@ Returns:
 - 500 Internal Server Error on DB failure
 */
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-
 	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
@@ -38,22 +74,11 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
-
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-		return
-	}
-	if !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-		return
-	}
-
 	if u.FullName == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-
+	u.FirebaseID = fireBaseUser.UID
 	user, err := h.DB.CreateUser(&u)
 
 	if errors.Is(err, db.ErrAlreadyExists) {
@@ -72,28 +97,27 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
 		return
 	}
 
+	users, err := h.DB.GetUsers(fireBaseUser.UID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch users")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}
+
+func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var u models.UserModifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-		return
-	}
-
-	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, u.EventId)
-
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-		return
-	}
-
-	if !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
 		return
 	}
 
@@ -102,7 +126,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.DB.UpdateUser(&u)
+	err := h.DB.UpdateUser(&u)
 
 	if errors.Is(err, db.ErrNotFound) {
 		utils.RespondWithError(w, http.StatusNotFound, "User Not Found")
@@ -166,114 +190,13 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	attendees, err := h.DB.GetUsersByEvent(eventID)
 	if err != nil {
-    log.Print(err.Error())
+		log.Print(err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed to fetch attendees")
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(attendees)
-}
-
-func (h *Handler) ImportUser(w http.ResponseWriter, r *http.Request) {
-	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
-		return
-	}
-
-	vars := mux.Vars(r)
-	streventID := vars["event_id"]
-	if streventID == "" {
-		http.Error(w, "Missing event_id in URL", http.StatusBadRequest)
-		return
-	}
-
-	eventID, err := uuid.Parse(streventID)
-	if err != nil {
-		http.Error(w, "Invalid event_id format", http.StatusBadRequest)
-		return
-	}
-
-	access, err := h.DB.CanCreateAttendee(fireBaseUser.UID, streventID)
-
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-		return
-	}
-	if !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-		return
-	}
-
-	failedLog := []string{}
-	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "Failed to parse multipart form", http.StatusBadRequest)
-		return
-	}
-
-	file, _, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "Failed to get uploaded file", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
-	f, err := excelize.OpenReader(file)
-	if err != nil {
-		http.Error(w, "Failed to read Excel file", http.StatusBadRequest)
-		return
-	}
-
-	sheetName := f.GetSheetName(0)
-	rows, err := f.GetRows(sheetName)
-	if err != nil {
-		http.Error(w, "Failed to read Excel rows", http.StatusInternalServerError)
-		return
-	}
-
-	var users []models.UserRequest
-
-	for i, row := range rows {
-		if i == 0 {
-			continue
-		}
-
-		if len(row) != 4 {
-			continue
-		}
-
-		if row[0] == "" {
-			failedLog = append(failedLog, fmt.Sprintf("Failed to create user in row %v username:%s - company:%s - role:%s - position:%s because a field is empty", i+1, row[0], row[1], row[2], row[3]))
-			continue
-		}
-
-		user := models.UserRequest{
-			Role:     row[0],
-			FullName: row[1],
-			Position: row[2],
-			Company:  row[3],
-		}
-		users = append(users, user)
-	}
-
-	for i, user := range users {
-		user, err := h.DB.CreateUser(&models.UserRequest{
-			FullName:  user.FullName,
-			Company:   user.Company,
-			Position:  user.Position,
-			Image_url: "https://res.cloudinary.com/dcvr2byrp/image/upload/v1753007426/qocwao1uaykjjnkzqxvo.jpg",
-			Role:      user.Role,
-			EventId:   eventID.String(),
-		})
-		if err != nil {
-			failedLog = append(failedLog, fmt.Sprintf("Failed to create user in row %v username:%s - company:%s - role:%s - position:%s because %v", i+2, user.FullName, user.Company, user.Role, user.Position, err.Error()))
-			continue
-		}
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(failedLog)
-
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {

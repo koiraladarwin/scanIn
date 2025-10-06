@@ -61,17 +61,26 @@ func (p *PostgresDB) createTables() error {
 			deleted_at TIMESTAMPTZ
 		);`,
 
+		// 2. Users Category table
+		`CREATE TABLE IF NOT EXISTS users_category(
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
+     firebase_id TEXT,
+     tag TEXT NOT NULL,
+     description TEXT,
+     deleted_at TIMESTAMPTZ
+    );`,
+
 		// 2. Users table
 		`CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			auto_id INT NOT NULL,
+      firebase_id TEXT,
 			full_name TEXT NOT NULL,
 			image_url TEXT NOT NULL,
 			company TEXT NOT NULL,
 			position TEXT NOT NULL,
-			role TEXT NOT NULL,
-			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-			UNIQUE (role, auto_id, event_id),
+      users_category_id UUID REFERENCES users_category(id) ON DELETE SET NULL,
+			UNIQUE (users_category_id, auto_id),
 			deleted_at TIMESTAMPTZ
 		);`,
 

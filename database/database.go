@@ -6,14 +6,16 @@ import (
 )
 
 type Database interface {
+	CreateUserCategory(*models.UsersCategoryRequest) (*models.UsersCategory, error)
 	CreateUser(*models.UserRequest) (*models.User, error)
+	GetUsers(firebaseid string) ([]models.User, error)
 	GetUser(id uuid.UUID) (*models.User, error)
 	UpdateUser(user *models.UserModifyRequest) error
 	GetUsersByEvent(eventID uuid.UUID) ([]models.User, error)
 	DeleteUser(id uuid.UUID) error
 
 	CreateEventCategory(*models.EventCategoryRequest) (models.EventCategory, error)
-  GetEventCategories(firebase_id string) ([]models.EventCategory, error)
+	GetEventCategories(firebase_id string) ([]models.EventCategory, error)
 	CreateEvent(*models.EventCreateRequest) (models.Event, error)
 	UpdateEvent(*models.EventModifyRequest) error
 	DeleteEvent(id uuid.UUID) error
