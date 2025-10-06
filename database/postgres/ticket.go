@@ -3,6 +3,7 @@ package postgres
 import (
 	"log"
 
+	"github.com/google/uuid"
 	"github.com/koiraladarwin/scanin/models"
 )
 
@@ -15,6 +16,16 @@ func (p *PostgresDB) CreateTicketCategory(a models.TicketCategory) (models.Ticke
 		return models.TicketCategory{}, err
 	}
 	return ticketCategory, nil
+}
+
+func (p *PostgresDB) GetTicketCategory(firebaseId string, id uuid.UUID) (models.TicketCategory, error) {
+	query := `SELECT id, tag, description, type FROM ticket_category WHERE firebase_id = $1 AND deleted_at IS NULL AND id = $2;`
+	var tc models.TicketCategory
+	err := p.sql.QueryRow(query, firebaseId, id).Scan(&tc.ID, &tc.Tag, &tc.Description, &tc.Type)
+	if err != nil {
+		return models.TicketCategory{}, err
+	}
+	return tc, nil
 }
 
 func (p *PostgresDB) GetTicketCategories(firebaseId string, ticket_type string) ([]models.TicketCategory, error) {
@@ -36,9 +47,16 @@ func (p *PostgresDB) GetTicketCategories(firebaseId string, ticket_type string) 
 }
 
 func (p *PostgresDB) CreateTicket(a models.TicketRequest) (models.Ticket, error) {
-	query := `INSERT INTO ticket (event_id, ticket_category_id, price, name,firebase_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, event_id, price, name;`
+	query := `
+	INSERT INTO ticket (event_id, ticket_category_id, price, name, firebase_id)
+	VALUES ($1, $2, $3, $4, $5)
+	RETURNING id, event_id, ticket_category_id, price, name, firebase_id;
+	`
+
 	var ticket models.Ticket
-	err := p.sql.QueryRow(query, a.EventID, a.TicketCategoryID, a.Price, a.Name, a.FirebaseID).Scan(&ticket.ID, &ticket.TicketCategoryID, &ticket.EventID, &ticket.Price, &ticket.Name)
+	err := p.sql.QueryRow(query, a.EventID, a.TicketCategoryID, a.Price, a.Name, a.FirebaseID).
+		Scan(&ticket.ID, &ticket.EventID, &ticket.TicketCategoryID, &ticket.Price, &ticket.Name, &ticket.FirebaseID)
+
 	if err != nil {
 		return models.Ticket{}, err
 	}

@@ -157,6 +157,12 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ticketCategory, err := h.DB.GetTicketCategory(firebaseUser.UID, ticketReq.TicketCategoryID)
+	if err != nil || ticketCategory.Type != "tkt" {
+		http.Error(w, "Invalid ticket category id", http.StatusBadRequest)
+		return
+	}
+
 	ticketReq.FirebaseID = firebaseUser.UID
 
 	ticket, err := h.DB.CreateTicket(ticketReq)
@@ -187,6 +193,12 @@ func (h *Handler) CreateInvitee(w http.ResponseWriter, r *http.Request) {
 
 	if ticketReq.EventID == uuid.Nil.String() || ticketReq.Name == "" {
 		http.Error(w, "Missing or invalid required fields", http.StatusBadRequest)
+		return
+	}
+
+	ticketCategory, err := h.DB.GetTicketCategory(firebaseUser.UID, ticketReq.TicketCategoryID)
+	if err != nil || ticketCategory.Type != "inv" {
+		http.Error(w, "Invalid ticket category id", http.StatusBadRequest)
 		return
 	}
 

@@ -59,6 +59,7 @@ type Database interface {
 	CreateTicket(a models.TicketRequest) (models.Ticket, error)
 	CreateTicketCategory(a models.TicketCategory) (models.TicketCategory, error)
 	GetTicketCategories(firebaseId string, ticket_type string) ([]models.TicketCategory, error)
+	GetTicketCategory(firebaseId string, id uuid.UUID) (models.TicketCategory, error)
 
 	Close() error
 }
