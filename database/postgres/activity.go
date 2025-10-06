@@ -5,12 +5,38 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) error {
-  var id string
-	query := `INSERT INTO activities (event_id, name, type, start_time, end_time) 
-			  VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	return p.sql.QueryRow(query, a.EventID, a.Name, a.Type, a.StartTime, a.EndTime).Scan(&id)
+
+func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.Activity, error) {
+	var activity models.Activity
+	query := `
+		INSERT INTO activities (event_id, name, type, start_time, end_time) 
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, event_id, name, type, start_time, end_time
+	`
+
+	err := p.sql.QueryRow(
+		query,
+		a.EventID,
+		a.Name,
+		a.Type,
+		a.StartTime,
+		a.EndTime,
+	).Scan(
+		&activity.ID,
+		&activity.EventID,
+		&activity.Name,
+		&activity.Type,
+		&activity.StartTime,
+		&activity.EndTime,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &activity, nil
 }
+
 
 func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
 	scannedUsers := 0

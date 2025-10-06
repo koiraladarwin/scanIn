@@ -21,7 +21,6 @@ type ActivityCreateRequest struct {
 	Type                string    `json:"type"`    
 	StartTime           time.Time `json:"start_time"`
 	EndTime             time.Time `json:"end_time"`
-	NumberOfScanedUsers int       `json:"number_of_scaned_users"`
 }
 
 

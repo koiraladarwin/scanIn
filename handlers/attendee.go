@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -24,13 +25,14 @@ func (h *Handler) CreateAttendee(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if attendeeReq.EventID == uuid.Nil || attendeeReq.UserID == uuid.Nil || attendeeReq.TicketID == uuid.Nil {
+	if  attendeeReq.UserID == uuid.Nil || attendeeReq.TicketID == uuid.Nil {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	attendee, err := h.DB.CreateAttendee(attendeeReq)
 	if err != nil {
+    log.Println("Error creating attendee:", err)
 		http.Error(w, "Failed to create attendee", http.StatusInternalServerError)
 		return
 	}

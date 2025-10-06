@@ -9,23 +9,40 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-func (p *PostgresDB) CreateCheckInLog(c *models.CheckInLog) error {
-	var id string
-	query := `INSERT INTO check_in_logs (user_id, activity_id, scanned_at, status, scanned_by)
-			  VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	return p.sql.QueryRow(query, c.UserID, c.ActivityID, c.ScannedAt, c.Status, c.ScannedBy).Scan(&id)
+func (p *PostgresDB) CreateCheckInLog(c *models.CheckInLog) (*models.CheckInLog, error) {
+	query := `
+		INSERT INTO check_in_logs (attendee_id, activity_id, scanned_at, scanned_by)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id
+	`
+
+	var id uuid.UUID
+	err := p.sql.QueryRow(
+		query,
+		c.AttendeeId,
+		c.ActivityID,
+		c.ScannedAt,
+		c.ScannedBy,
+	).Scan(&id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	c.ID = id
+	return c, nil
 }
 
 func (p *PostgresDB) GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error) {
 	c := &models.CheckInLog{}
-	query := `SELECT id, user_id, activity_id, scanned_at, status, scanned_by FROM check_in_logs WHERE id=$1`
-	err := p.sql.QueryRow(query, id).Scan(&c.ID, &c.UserID, &c.ActivityID, &c.ScannedAt, &c.Status, &c.ScannedBy)
+	query := `SELECT id, user_id, activity_id, scanned_at, scanned_by FROM check_in_logs WHERE id=$1`
+	err := p.sql.QueryRow(query, id).Scan(&c.ID, &c.AttendeeId, &c.ActivityID, &c.ScannedAt, &c.ScannedBy)
 	return c, err
 }
 
 func (p *PostgresDB) GetAllCheckInLog() ([]models.CheckInLog, error) {
 	logs := []models.CheckInLog{}
-	query := `SELECT id, user_id, activity_id, scanned_at, status, scanned_by FROM check_in_logs`
+	query := `SELECT id, user_id, activity_id, scanned_at, scanned_by FROM check_in_logs`
 	rows, err := p.sql.Query(query)
 	if err != nil {
 		return nil, err
@@ -34,7 +51,7 @@ func (p *PostgresDB) GetAllCheckInLog() ([]models.CheckInLog, error) {
 
 	for rows.Next() {
 		var log models.CheckInLog
-		err := rows.Scan(&log.ID, &log.UserID, &log.ActivityID, &log.ScannedAt, &log.Status, &log.ScannedBy)
+		err := rows.Scan(&log.ID, &log.AttendeeId, &log.ActivityID, &log.ScannedAt, &log.ScannedBy)
 		if err != nil {
 			return nil, err
 		}
@@ -49,8 +66,8 @@ func (p *PostgresDB) GetAllCheckInLog() ([]models.CheckInLog, error) {
 }
 
 func (p *PostgresDB) UpdateCheckInLog(c *models.CheckInLog) error {
-	query := `UPDATE check_in_logs SET user_id=$1, activity_id=$2, scanned_at=$3, status=$4, scanned_by=$5 WHERE id=$6`
-	_, err := p.sql.Exec(query, c.UserID, c.ActivityID, c.ScannedAt, c.Status, c.ScannedBy, c.ID)
+	query := `UPDATE check_in_logs SET user_id=$1, activity_id=$2, scanned_at=$3, scanned_by=$5 WHERE id=$6`
+	_, err := p.sql.Exec(query, c.AttendeeId, c.ActivityID, c.ScannedAt, c.ScannedBy, c.ID)
 	return err
 }
 
@@ -76,7 +93,7 @@ func (p *PostgresDB) CheckInExists(attendeeID uuid.UUID, activityID uuid.UUID) (
 }
 
 func (p *PostgresDB) GetAllCheckInOfEvents(eventID uuid.UUID) ([]models.CheckInLog, error) {
-  log.Print("Executing query to get all check-in logs: ")
+	log.Print("Executing query to get all check-in logs: ")
 	var checkIns []models.CheckInLog
 	queryActivities := `SELECT id FROM activities WHERE event_id = $1`
 	rows, err := p.sql.Query(queryActivities, eventID)
@@ -100,7 +117,7 @@ func (p *PostgresDB) GetAllCheckInOfEvents(eventID uuid.UUID) ([]models.CheckInL
 
 		for activityRows.Next() {
 			var checkIn models.CheckInLog
-			if err := activityRows.Scan(&checkIn.ID, &checkIn.UserID, &checkIn.ActivityID, &checkIn.ScannedAt, &checkIn.Status, &checkIn.ScannedBy); err != nil {
+			if err := activityRows.Scan(&checkIn.ID, &checkIn.AttendeeId, &checkIn.ActivityID, &checkIn.ScannedAt, &checkIn.ScannedBy); err != nil {
 				activityRows.Close()
 				return nil, err
 			}
@@ -129,7 +146,6 @@ func (p *PostgresDB) GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInResp
 			a.name as activity_name,
 			c.activity_id,
 			c.scanned_at,
-			c.status,
 			c.scanned_by
 		FROM check_in_logs c
 		JOIN users u ON u.id = c.user_id
@@ -150,11 +166,10 @@ func (p *PostgresDB) GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInResp
 			&checkIn.FullName,
 			&checkIn.AutoId,
 			&checkIn.Role,
-			&checkIn.UserID,
+			&checkIn.AttendeeId,
 			&checkIn.ActivityName,
 			&checkIn.ActivityID,
 			&checkIn.ScannedAt,
-			&checkIn.Status,
 			&checkIn.ScannedBy,
 		); err != nil {
 			return nil, err
@@ -182,7 +197,6 @@ func (p *PostgresDB) GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.Che
 			a.name as activity_name,
 			c.activity_id,
 			c.scanned_at,
-			c.status,
 			c.scanned_by
 		FROM check_in_logs c
 		JOIN users u ON u.id = c.user_id
@@ -203,11 +217,10 @@ func (p *PostgresDB) GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.Che
 			&checkIn.FullName,
 			&checkIn.AutoId,
 			&checkIn.Role,
-			&checkIn.UserID,
+			&checkIn.AttendeeId,
 			&checkIn.ActivityName,
 			&checkIn.ActivityID,
 			&checkIn.ScannedAt,
-			&checkIn.Status,
 			&checkIn.ScannedBy,
 		); err != nil {
 			return nil, err

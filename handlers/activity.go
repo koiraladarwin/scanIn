@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"slices"
 
 	"github.com/koiraladarwin/scanin/features/firebaseauth"
 	"github.com/koiraladarwin/scanin/models"
@@ -29,13 +28,11 @@ Returns:
 - 400 Bad Request for invalid input
 - 500 Internal Server Error on DB failure
 */
+
+// todo: make sure the eventid belong to the same firebase user
 func (h *Handler) CreateActivity(w http.ResponseWriter, r *http.Request) {
-	firebaseId, ok := firebaseauth.FbUserFromContext(r.Context())
+	_, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-	if !slices.Contains(superAdminsEmails, firebaseId.Email) {
 		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -45,13 +42,18 @@ func (h *Handler) CreateActivity(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-	if err := h.DB.CreateActivity(&c); err != nil {
+	if c.EventID.String() == "" || c.Name == "" || c.Type == "" || c.StartTime.IsZero() || c.EndTime.IsZero() {
+		utils.RespondWithError(w, http.StatusBadRequest, "Missing required fields")
+		return
+	}
+	activity, err := h.DB.CreateActivity(&c)
+	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create Event")
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(c)
+	json.NewEncoder(w).Encode(activity)
 }
 
 /*

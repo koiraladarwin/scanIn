@@ -27,16 +27,15 @@ type Database interface {
 	GetEventByStaffId(id string) (*models.Event, error)
 	GetStaffByEvent(eventId string) ([]models.Staff, error)
 
-	CreateActivity(*models.ActivityCreateRequest) error
+	CreateActivity(*models.ActivityCreateRequest) (*models.Activity,error)
 	GetActivity(id uuid.UUID) (*models.Activity, error)
 	UpdateActivity(*models.Activity) error
 	DeleteActivity(id uuid.UUID) error
 	GetActivitiesByEvent(firebaseId string, eventID uuid.UUID) ([]models.Activity, error)
 	GetEventIdByActivity(activityId uuid.UUID) (uuid.UUID, error)
 
-	CreateCheckInLog(*models.CheckInLog) error
+	CreateCheckInLog(*models.CheckInLog) (*models.CheckInLog, error)
 	GetCheckInLog(id uuid.UUID) (*models.CheckInLog, error)
-	UpdateCheckInLog(*models.CheckInLog) error
 	DeleteCheckInLog(id uuid.UUID) error
 	CheckInExists(userID uuid.UUID, activityID uuid.UUID) (uuid.UUID, error)
 	GetAllCheckInLog() ([]models.CheckInLog, error)
@@ -56,5 +55,7 @@ type Database interface {
 	ModifyEventRole(role models.EditRoleRequest) error
 
 	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
+
+	CreateTicket(a models.TicketRequest) (models.Ticket, error)
 	Close() error
 }

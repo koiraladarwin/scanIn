@@ -74,6 +74,8 @@ func main() {
   
   Router.HandleFunc("/enrollattendee", handler.CreateAttendee).Methods(constants.Post)
 
+  Router.HandleFunc("/ticket", handler.CreateTicket).Methods(constants.Post) 
+
   Router.HandleFunc("/eventcategory", handler.CreateEventCategory).Methods(constants.Post)  
   Router.HandleFunc("/eventcategories", handler.GetEventCategories).Methods(constants.Get)
 	Router.HandleFunc("/event", handler.CreateEvent).Methods(constants.Post)
@@ -93,7 +95,6 @@ func main() {
 	Router.HandleFunc("/activitycheckins/{activity_id}", handler.GetCheckInByActivityId).Methods(constants.Get)
 	Router.HandleFunc("/attendeecheckins/{attendee_id}", handler.GetCheckInByUserId).Methods(constants.Get)
 	Router.HandleFunc("/checkins", handler.CreateCheckIn).Methods(constants.Post)
-	Router.HandleFunc("/checkins/{id}", handler.ModifyCheckIn).Methods(constants.Put)
 	Router.HandleFunc("/exportcheckins/{event_id}", handler.ExportCheckIn).Methods(constants.Get)
 
 	log.Printf("Server running on port %s", port)

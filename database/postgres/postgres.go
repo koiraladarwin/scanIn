@@ -87,6 +87,8 @@ func (p *PostgresDB) createTables() error {
 		// 3. Ticket table (must come before attendee)
 		`CREATE TABLE IF NOT EXISTS ticket (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      firebase_id TEXT,
+      name TEXT NOT NULL,
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
 			price NUMERIC NOT NULL,
 			deleted_at TIMESTAMPTZ
@@ -96,9 +98,9 @@ func (p *PostgresDB) createTables() error {
 		`CREATE TABLE IF NOT EXISTS attendee (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
 			ticket_id UUID REFERENCES ticket(id) ON DELETE SET NULL,
-			deleted_at TIMESTAMPTZ
+			deleted_at TIMESTAMPTZ,
+      UNIQUE (user_id, ticket_id)
 		);`,
 
 		// 5. Activities table
@@ -112,25 +114,19 @@ func (p *PostgresDB) createTables() error {
 			deleted_at TIMESTAMPTZ
 		);`,
 
-		// 7. Scan roles table
-		`CREATE TABLE IF NOT EXISTS scan_roles (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			firebase_id TEXT NOT NULL,
-			activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-			access BOOLEAN NOT NULL DEFAULT false,
-			UNIQUE (firebase_id, activity_id)
-		);`,
-
 		// 8. Check-in logs table
 		`CREATE TABLE IF NOT EXISTS check_in_logs (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			attendee_id UUID NOT NULL REFERENCES attendee(id) ON DELETE CASCADE,
-			activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-			scanned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			status TEXT NOT NULL,
-			scanned_by TEXT NOT NULL,
-			UNIQUE (attendee_id, activity_id)
-		);`,
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+     attendee_id UUID NOT NULL REFERENCES attendee(id) ON DELETE CASCADE,
+     activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+     scanned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     scanned_by TEXT NOT NULL,
+     deleted_at TIMESTAMPTZ
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS unique_active_checkin
+      ON check_in_logs (attendee_id, activity_id)
+      WHERE deleted_at IS NULL;`,
 	}
 
 	for _, stmt := range stmts {
