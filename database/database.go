@@ -27,7 +27,7 @@ type Database interface {
 	GetEventByStaffId(id string) (*models.Event, error)
 	GetStaffByEvent(eventId string) ([]models.Staff, error)
 
-	CreateActivity(*models.ActivityCreateRequest) (*models.Activity,error)
+	CreateActivity(*models.ActivityCreateRequest) (*models.Activity, error)
 	GetActivity(id uuid.UUID) (*models.Activity, error)
 	UpdateActivity(*models.Activity) error
 	DeleteActivity(id uuid.UUID) error
@@ -57,5 +57,8 @@ type Database interface {
 	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
 
 	CreateTicket(a models.TicketRequest) (models.Ticket, error)
+	CreateTicketCategory(a models.TicketCategory) (models.TicketCategory, error)
+	GetTicketCategories(firebaseId string, ticket_type string) ([]models.TicketCategory, error)
+
 	Close() error
 }

@@ -84,10 +84,22 @@ func (p *PostgresDB) createTables() error {
 			deleted_at TIMESTAMPTZ
 		);`,
 
-		// 3. Ticket table (must come before attendee)
+		// 3. Ticket table category
+    `CREATE TABLE IF NOT EXISTS ticket_category(
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      firebase_id TEXT,
+      tag TEXT NOT NULL,
+      description TEXT,
+      type TEXT NOT NULL CHECK (type IN ('inv', 'tkt')),
+      deleted_at TIMESTAMPTZ
+      );
+    `,
+
+		// 3. Ticket table
 		`CREATE TABLE IF NOT EXISTS ticket (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       firebase_id TEXT,
+      ticket_category_id UUID REFERENCES ticket_category(id) ON DELETE SET NULL,
       name TEXT NOT NULL,
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
 			price NUMERIC NOT NULL,
