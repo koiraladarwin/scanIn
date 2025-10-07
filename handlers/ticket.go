@@ -152,7 +152,7 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ticketReq.EventID == uuid.Nil.String() || ticketReq.Price < 0 || ticketReq.Name == "" {
+	if ticketReq.EventID == uuid.Nil.String() || ticketReq.Price <= 0 || ticketReq.Name == "" {
 		http.Error(w, "Missing or invalid required fields", http.StatusBadRequest)
 		return
 	}
@@ -164,6 +164,7 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ticketReq.FirebaseID = firebaseUser.UID
+  ticketReq.Paid = false 
 
 	ticket, err := h.DB.CreateTicket(ticketReq)
 	if err != nil {
@@ -171,9 +172,16 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error creating ticket:", err)
 		return
 	}
-
+  ticketRes := models.TicketResponse{
+      ID:               ticket.ID,
+      TicketCategoryID: ticket.TicketCategoryID,
+      EventID:          ticket.EventID,
+      Price:            ticket.Price,
+      Name:             ticket.Name,
+      Paid:             ticket.Paid,
+  }
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ticket)
+	json.NewEncoder(w).Encode(ticketRes)
 }
 
 func (h *Handler) CreateInvitee(w http.ResponseWriter, r *http.Request) {
@@ -195,7 +203,7 @@ func (h *Handler) CreateInvitee(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing or invalid required fields", http.StatusBadRequest)
 		return
 	}
-
+  
 	ticketCategory, err := h.DB.GetTicketCategory(firebaseUser.UID, ticketReq.TicketCategoryID)
 	if err != nil || ticketCategory.Type != "inv" {
 		http.Error(w, "Invalid ticket category id", http.StatusBadRequest)
@@ -204,6 +212,7 @@ func (h *Handler) CreateInvitee(w http.ResponseWriter, r *http.Request) {
 
 	ticketReq.FirebaseID = firebaseUser.UID
 	ticketReq.Price = 0
+  ticketReq.Paid = true
 
 	ticket, err := h.DB.CreateTicket(ticketReq)
 	if err != nil {
@@ -212,6 +221,13 @@ func (h *Handler) CreateInvitee(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+  inviteeRes := models.InviteeResponse{
+      ID:               ticket.ID,
+      TicketCategoryID: ticket.TicketCategoryID, 
+      EventID:          ticket.EventID,
+      Name:             ticket.Name,
+  }
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ticket)
+	json.NewEncoder(w).Encode(inviteeRes)
 }

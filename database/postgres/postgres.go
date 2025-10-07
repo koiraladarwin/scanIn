@@ -103,6 +103,7 @@ func (p *PostgresDB) createTables() error {
       name TEXT NOT NULL,
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
 			price NUMERIC NOT NULL,
+      paid BOOLEAN NOT NULL DEFAULT FALSE,
 			deleted_at TIMESTAMPTZ
 		);`,
 

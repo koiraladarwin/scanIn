@@ -48,14 +48,14 @@ func (p *PostgresDB) GetTicketCategories(firebaseId string, ticket_type string) 
 
 func (p *PostgresDB) CreateTicket(a models.TicketRequest) (models.Ticket, error) {
 	query := `
-	INSERT INTO ticket (event_id, ticket_category_id, price, name, firebase_id)
-	VALUES ($1, $2, $3, $4, $5)
-	RETURNING id, event_id, ticket_category_id, price, name, firebase_id;
+	INSERT INTO ticket (event_id, ticket_category_id, price, name, firebase_id, paid)
+	VALUES ($1, $2, $3, $4, $5, $6)
+	RETURNING id, event_id, ticket_category_id, price, name, firebase_id, paid;
 	`
 
 	var ticket models.Ticket
-	err := p.sql.QueryRow(query, a.EventID, a.TicketCategoryID, a.Price, a.Name, a.FirebaseID).
-		Scan(&ticket.ID, &ticket.EventID, &ticket.TicketCategoryID, &ticket.Price, &ticket.Name, &ticket.FirebaseID)
+	err := p.sql.QueryRow(query, a.EventID, a.TicketCategoryID, a.Price, a.Name, a.FirebaseID, a.Paid).
+		Scan(&ticket.ID, &ticket.EventID, &ticket.TicketCategoryID, &ticket.Price, &ticket.Name, &ticket.FirebaseID, &ticket.Paid)
 
 	if err != nil {
 		return models.Ticket{}, err
@@ -64,7 +64,7 @@ func (p *PostgresDB) CreateTicket(a models.TicketRequest) (models.Ticket, error)
 }
 
 func (p *PostgresDB) GetTickets(firebaseID string) ([]models.Ticket, error) {
-	query := `SELECT id, event_id, ticket_category_id, price, name FROM ticket WHERE firebase_id = $1 AND deleted_at IS NULL;`
+	query := `SELECT id, event_id, ticket_category_id, price, name, paid FROM ticket WHERE firebase_id = $1 AND deleted_at IS NULL;`
 	rows, err := p.sql.Query(query, firebaseID)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (p *PostgresDB) GetTickets(firebaseID string) ([]models.Ticket, error) {
 	var tickets []models.Ticket
 	for rows.Next() {
 		var t models.Ticket
-		if err := rows.Scan(&t.ID, &t.EventID, &t.TicketCategoryID, &t.Price, &t.Name); err != nil {
+		if err := rows.Scan(&t.ID, &t.EventID, &t.TicketCategoryID, &t.Price, &t.Name, &t.Paid); err != nil {
 			return nil, err
 		}
 		tickets = append(tickets, t)
