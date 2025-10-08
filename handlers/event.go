@@ -58,12 +58,7 @@ func (h *Handler) GetEventCategories(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(category)
 }
 
-/*
-Returns:
-- 201 Created with created check-in JSON on success
-- 400 Bad Request for invalid input
-- 500 Internal Server Error on DB failure
-*/
+
 func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
@@ -113,7 +108,7 @@ func (h *Handler) AddEventWithEventCode(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	code := vars["code"]
 
-	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	_, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
 		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: no user in context")
 		return
@@ -143,7 +138,6 @@ func (h *Handler) AddEventWithEventCode(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.DB.AddStaffToEvent(fireBaseUser.UID, event.ID.String())
 	if err != nil {
 		log.Println("Failed to fetch event by code:2", err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add staff to event")
@@ -153,13 +147,8 @@ func (h *Handler) AddEventWithEventCode(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(event)
 }
 
-/*
-Returns:
-- 200 OK with JSON array of all events
-- 500 Internal Server Error if DB query fails
-*/
+
 func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
-	// events, err := h.DB.GetAllEvents()
 	firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
 		log.Println("Unauthorized: no user in context")
@@ -176,14 +165,6 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(events)
 }
-
-/*
-Returns:
-  - 200 OK with JSON { event: {...}, activities: [...] }
-  - 400 Bad Request if event_id missing or invalid
-  - 404 Not Found if event does not exist
-  - 500 Internal Server Error on DB failures
-*/
 
 func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
 	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())

@@ -107,19 +107,9 @@ func (p *PostgresDB) createTables() error {
 			deleted_at TIMESTAMPTZ
 		);`,
 
-		// 4. Attendee category table
-		`CREATE TABLE IF NOT EXISTS attendee_category(
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      firebase_id TEXT,
-      tag TEXT NOT NULL,
-      description TEXT,
-      deleted_at TIMESTAMPTZ
-      );`,
-
 		// 4. Attendee table
 		`CREATE TABLE IF NOT EXISTS attendee (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      attendee_category_id UUID REFERENCES attendee_category(id) ON DELETE SET NULL,
 			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			ticket_id UUID REFERENCES ticket(id) ON DELETE SET NULL,
 			deleted_at TIMESTAMPTZ,
@@ -150,6 +140,49 @@ func (p *PostgresDB) createTables() error {
       CREATE UNIQUE INDEX IF NOT EXISTS unique_active_checkin
       ON check_in_logs (attendee_id, activity_id)
       WHERE deleted_at IS NULL;`,
+
+		// 9.Staff category table
+		`CREATE TABLE IF NOT EXISTS staff_category (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      firebase_id TEXT,
+      tag TEXT NOT NULL,
+      description TEXT,
+      deleted_at TIMESTAMPTZ
+    );
+    `,
+
+		// 9.Staff table
+		`CREATE TABLE IF NOT EXISTS staff (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      firebase_id TEXT,
+      staff_gmail TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      image_url TEXT,
+      phone TEXT,
+      staff_category_id UUID REFERENCES staff_category(id) ON DELETE SET NULL,
+      deleted_at TIMESTAMPTZ
+    );
+    `,
+		// 9.Staff enroll table
+		`CREATE TABLE IF NOT EXISTS staff_enroll (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      firebase_id TEXT,
+      staff_id UUID NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
+      event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      active BOOLEAN NOT NULL DEFAULT FALSE,
+      deleted_at TIMESTAMPTZ,
+      UNIQUE (staff_id, event_id)
+    );`,
+		// 9. Staff activities table
+		`CREATE TABLE IF NOT EXISTS staff_activites (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      firebase_id TEXT,
+      staff_enroll_id UUID NOT NULL REFERENCES staff_enroll(id) ON DELETE CASCADE,
+      activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+      deleted_at TIMESTAMPTZ,
+      UNIQUE (staff_enroll_id, activity_id)
+    );
+    `,
 	}
 
 	for _, stmt := range stmts {

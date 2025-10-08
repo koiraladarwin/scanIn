@@ -253,7 +253,7 @@ Returns:
 
 func (h *Handler) GetCheckInByActivityId(w http.ResponseWriter, r *http.Request) {
 
-	fbUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	_, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
 		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: no user in context")
 		return
@@ -269,28 +269,6 @@ func (h *Handler) GetCheckInByActivityId(w http.ResponseWriter, r *http.Request)
 	activityId, err := uuid.Parse(activityIdStr)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID format")
-		return
-	}
-
-	eventId, err := h.DB.GetEventIdByActivity(activityId)
-	if err != nil {
-		log.Println("here1")
-		log.Println(err.Error())
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to get event ID by activity")
-		return
-	}
-
-	access, err := h.DB.CanSeeScanned(fbUser.UID, eventId.String())
-
-	if err != nil {
-		log.Println("here2")
-		log.Println(err.Error())
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-		return
-	}
-
-	if !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
 		return
 	}
 

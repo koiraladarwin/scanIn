@@ -109,36 +109,22 @@ func (p *PostgresDB) CreateEvent(e *models.EventCreateRequest) (models.Event, er
 
 	return createdEvent, nil
 }
-func (p *PostgresDB) GetEventsByFirebaseUser(firebaseUser string) ([]models.Event, error) {
+func (p *PostgresDB) GetEventsByFirebaseUser(firebaseId string) ([]models.Event, error) {
 	query := `
-
 SELECT 
-    e.id,
-    e.name,
-    e.event_category_id,
-    e.description,
-    e.start_time,
-    e.end_time,
-    e.location,
-    e.staff_code,
-    e.admin_code,
-    COUNT(DISTINCT a.id) AS number_of_participants
-FROM events e
-LEFT JOIN attendee a ON a.event_id = e.id AND a.deleted_at IS NULL
-WHERE e.deleted_at IS NULL
-AND e.firebase_id = $1
-GROUP BY 
-    e.id, 
-    e.name,
-    e.event_category_id,
-    e.description, 
-    e.start_time, 
-    e.end_time, 
-    e.location, 
-    e.staff_code, 
-    e.admin_code;
+    id,
+    name,
+    event_category_id,
+    description,
+    start_time,
+    end_time,
+    location,
+    staff_code,
+    admin_code
+FROM events 
+  where firebase_id = $1 AND deleted_at IS NULL;
 `
-	rows, err := p.sql.Query(query, firebaseUser)
+	rows, err := p.sql.Query(query, firebaseId)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +144,6 @@ GROUP BY
 			&e.Location,
 			&e.StaffCode,
 			&e.AdminCode,
-			&e.NumberOfParticipant,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan event: %w", err)
 		}

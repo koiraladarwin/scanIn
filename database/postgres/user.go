@@ -32,6 +32,24 @@ func (p *PostgresDB) CreateUserCategory(reqUserCat *models.UsersCategoryRequest)
 	return &userCat, err
 }
 
+func (p *PostgresDB) GetUserCategories(firebaseId string)([]models.UsersCategory,error){
+  query := `SELECT id, firebase_id, tag, description FROM users_category WHERE firebase_id=$1 AND deleted_at IS NULL`
+  rows, err := p.sql.Query(query, firebaseId)
+  if err != nil {
+    return nil, err
+  }
+  defer rows.Close()
+  var userCategories []models.UsersCategory
+  for rows.Next() {
+    var uc models.UsersCategory
+    if err := rows.Scan(&uc.ID, &uc.FirebaseID, &uc.Tag, &uc.Description); err != nil {
+      return nil, err
+    }
+    userCategories = append(userCategories, uc)
+  }
+  return userCategories, nil
+}
+
 func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, error) {
 	var lastAutoID int
 	var user models.User

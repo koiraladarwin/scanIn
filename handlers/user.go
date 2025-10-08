@@ -53,14 +53,32 @@ func (h *Handler) CreateUserCategory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(userCat)
 }
 
-/*
-Returns:
-- 201 Created with created user JSON on success
-- 400 Bad Request for invalid input
-- 405 Method not allowed except POST
-- 409 Failed because User Exists already
-- 500 Internal Server Error on DB failure
-*/
+func (h *Handler) GetUserCategories(w http.ResponseWriter, r *http.Request) {
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
+	userCategories, err := h.DB.GetUserCategories(fireBaseUser.UID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch user categories")
+		return
+	}
+	userCategoriesResponse := make([]models.UsersCategoryResponse, len(userCategories))
+	for i, uc := range userCategories {
+		userCategoriesResponse[i] = models.UsersCategoryResponse{
+			ID:          uc.ID,
+			Tag:         uc.Tag,
+			Description: uc.Description,
+			DeletedAt:   uc.DeletedAt,
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(userCategoriesResponse)
+}
+
+
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
@@ -152,7 +170,7 @@ Returns:
 - 500 Internal Server Error on database errors
 */
 func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
-	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	_, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
 		return
@@ -163,17 +181,6 @@ func (h *Handler) GetUsersByEvent(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "event ID not valid")
-		return
-	}
-
-	access, err := h.DB.CanSeeAttendee(fireBaseUser.UID, eventIDStr)
-
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-		return
-	}
-	if !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
 		return
 	}
 
@@ -216,16 +223,6 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	access, err := h.DB.IsCreator(userID, eventID)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check event access")
-		return
-	}
-
-	if !access {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Access denied")
-		return
-	}
 
 	uuidUser, err := uuid.Parse(userID)
 	if err != nil {

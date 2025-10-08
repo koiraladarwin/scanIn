@@ -65,16 +65,15 @@ func main() {
 
 	handler := handlers.New(db, fbAuth)
   
-  Router.HandleFunc("/usercategory", handler.CreateUserCategory).Methods(constants.Post)
-	Router.HandleFunc("/user", handler.CreateUser).Methods(constants.Post)
-	Router.HandleFunc("/user", handler.GetUsers).Methods(constants.Get)
-	Router.HandleFunc("/modifyuser", handler.UpdateUser).Methods(constants.Put)
-	Router.HandleFunc("/deleteuser", handler.DeleteUser).Methods(constants.Delete)
-	Router.HandleFunc("/users/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
+  Router.HandleFunc("/attendeecategory", handler.CreateUserCategory).Methods(constants.Post)
+  Router.HandleFunc("/attendeecategories", handler.GetUserCategories).Methods(constants.Get)
+	Router.HandleFunc("/attendee", handler.CreateUser).Methods(constants.Post)
+	Router.HandleFunc("/attendee", handler.GetUsers).Methods(constants.Get)
+	Router.HandleFunc("/modifyattendee", handler.UpdateUser).Methods(constants.Put)
+	Router.HandleFunc("/deleteattendee", handler.DeleteUser).Methods(constants.Delete)
+	Router.HandleFunc("/attendee/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
   
   Router.HandleFunc("/enrollattendee", handler.CreateAttendee).Methods(constants.Post)
-  Router.HandleFunc("/attendeecategory", handler.CreateAttendeeCategory).Methods(constants.Post) 
-  Router.HandleFunc("/attendeecategories", handler.GetAttendeeCategories).Methods(constants.Get)
 
   Router.HandleFunc("/ticket", handler.CreateTicket).Methods(constants.Post) 
   Router.HandleFunc("/ticketcategory", handler.CreateTicketCategory).Methods(constants.Post) 
@@ -87,13 +86,10 @@ func main() {
   Router.HandleFunc("/eventcategory", handler.CreateEventCategory).Methods(constants.Post)  
   Router.HandleFunc("/eventcategories", handler.GetEventCategories).Methods(constants.Get)
 	Router.HandleFunc("/event", handler.CreateEvent).Methods(constants.Post)
-	Router.HandleFunc("/modifyevent", handler.ModifyEvent).Methods(constants.Put)
 	Router.HandleFunc("/event", handler.GetEvent).Methods(constants.Get)
+	Router.HandleFunc("/modifyevent", handler.ModifyEvent).Methods(constants.Put)
 	Router.HandleFunc("/eventinfo", handler.GetEventInfo).Methods(constants.Get)
 	Router.HandleFunc("/addeventwithcode/{code}", handler.AddEventWithEventCode).Methods(constants.Post)
-	Router.HandleFunc("/giveRoleToStaffs", handler.GiveRoleToStaff).Methods(constants.Post)
-	Router.HandleFunc("/modifyRoleToStaffs", handler.ModifyRoleToStaff).Methods(constants.Post)
-	Router.HandleFunc("/getstaffs/{event_id}", handler.GetStaffsByEvent).Methods(constants.Get)
 
 	Router.HandleFunc("/activity", handler.CreateActivity).Methods(constants.Post)
 	Router.HandleFunc("/modifyactivity", handler.UpdateActivity).Methods(constants.Put)

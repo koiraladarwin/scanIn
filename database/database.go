@@ -7,6 +7,7 @@ import (
 
 type Database interface {
 	CreateUserCategory(*models.UsersCategoryRequest) (*models.UsersCategory, error)
+	GetUserCategories(firebaseId string) ([]models.UsersCategory, error)
 	CreateUser(*models.UserRequest) (*models.User, error)
 	GetUsers(firebaseid string) ([]models.User, error)
 	GetUser(id uuid.UUID) (*models.User, error)
@@ -25,7 +26,6 @@ type Database interface {
 	GetEventByFirebaseUser(firebaseId string, eventId uuid.UUID) (*models.Event, error)
 	GetEventByAdminId(id string) (*models.Event, error)
 	GetEventByStaffId(id string) (*models.Event, error)
-	GetStaffByEvent(eventId string) ([]models.Staff, error)
 
 	CreateActivity(*models.ActivityCreateRequest) (*models.Activity, error)
 	GetActivity(id uuid.UUID) (*models.Activity, error)
@@ -43,25 +43,17 @@ type Database interface {
 	GetAllCheckInOfActivity(activityID uuid.UUID) ([]models.CheckInRespose, error)
 	GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInRespose, error)
 
-	IsCreator(fbId string, eventId string) (bool, error)
-	CanSeeScanned(fbId string, eventId string) (bool, error)
-	CanCreateActivity(fbId string, eventId string) (bool, error)
-	CanCreateAttendee(fbId string, eventId string) (bool, error)
-	CanSeeAttendee(fbId string, eventId string) (bool, error)
-	CanSeeEventInfo(fbId, eventId string) (bool, error)
-	AddStaffToEvent(fbId, eventId string) error
-	AddAdminToEvent(fbId, eventId string) error
-	AddEventRole(role models.RoleRequest) error
-	ModifyEventRole(role models.EditRoleRequest) error
-
 	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
-	CreateAttendeeCategory(a models.AttendeeCategory) (models.AttendeeCategory, error)
-	GetAttendeeCategories(firebaseId string) ([]models.AttendeeCategory, error)
 
 	CreateTicket(a models.TicketRequest) (models.Ticket, error)
 	CreateTicketCategory(a models.TicketCategory) (models.TicketCategory, error)
 	GetTicketCategories(firebaseId string, ticket_type string) ([]models.TicketCategory, error)
 	GetTicketCategory(firebaseId string, id uuid.UUID) (models.TicketCategory, error)
 
+	CreateStaffCategory(staffCategoryRequest *models.StaffCategory) (*models.StaffCategory, error)
+	GetStaffCategories(firebaseId string) ([]models.StaffCategory, error)
 	Close() error
+	CreateStaff(staffRequest *models.Staff) (*models.Staff, error)
+	GetStaffs(firebaseId string) ([]models.Staff, error)
+
 }
