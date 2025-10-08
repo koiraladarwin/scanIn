@@ -100,6 +100,11 @@ func main() {
 	Router.HandleFunc("/attendeecheckins/{attendee_id}", handler.GetCheckInByUserId).Methods(constants.Get)
 	Router.HandleFunc("/checkins", handler.CreateCheckIn).Methods(constants.Post)
 	Router.HandleFunc("/exportcheckins/{event_id}", handler.ExportCheckIn).Methods(constants.Get)
+  
+  Router.HandleFunc("/staffcategory", handler.CreateStaffCategory).Methods(constants.Post)
+  Router.HandleFunc("/staffcategories", handler.GetStaffCategories).Methods(constants.Get)
+  Router.HandleFunc("/staff", handler.CreateStaff).Methods(constants.Post)
+  Router.HandleFunc("/staff", handler.GetStaffs).Methods(constants.Get)
 
 	log.Printf("Server running on port %s", port)
 	err = http.ListenAndServe(":"+port, withCORS(Router))
