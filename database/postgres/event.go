@@ -53,7 +53,7 @@ GROUP BY e.id, ec.tag;`
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return models.EventWithDetails{}, fmt.Errorf("no event found for firebase_id: %s", firebaseId)
+			return models.EventWithDetails{}, nil
 		}
 		return models.EventWithDetails{}, fmt.Errorf("failed to fetch event details: %w", err)
 	}
