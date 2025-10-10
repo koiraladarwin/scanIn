@@ -149,6 +149,13 @@ func (h *Handler) GetEventsWithDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	events, err := h.DB.GetEventsWithDetails(firebaseUser.UID)
+
+	if err == sql.ErrNoRows {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(events)
+    return
+	}
+
 	if err != nil {
 		log.Println("Failed to fetch events:", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")

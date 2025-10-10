@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (p *PostgresDB) GetEventsWithDetails(firebaseId string) (models.EventWithDetails, error) {
+func (p *PostgresDB) GetEventsWithDetails(firebaseId string) ([]models.EventWithDetails, error) {
 	query := `
 SELECT
     e.id,
@@ -23,7 +22,7 @@ SELECT
     e.start_time,
     e.end_time,
     e.location,
-    COALESCE(array_agg(DISTINCT a.name) FILTER (WHERE a.deleted_at IS NULL), '{}') AS session_names,
+    COALESCE(array_agg(DISTINCT a.name) FILTER (WHERE a.deleted_at IS NULL AND a.name IS NOT NULL), '{}') AS session_names,
     COALESCE(COUNT(DISTINCT t.id) FILTER (WHERE t.price != 0), 0) AS ticket_count,
     COALESCE(COUNT(DISTINCT t.id) FILTER (WHERE t.price = 0), 0) AS invitation_count
 FROM events e
@@ -32,34 +31,45 @@ LEFT JOIN activities a ON a.event_id = e.id
 LEFT JOIN ticket t ON t.event_id = e.id
 WHERE e.firebase_id = $1
   AND e.deleted_at IS NULL
-GROUP BY e.id, ec.tag;`
+GROUP BY e.id, ec.tag;
+`
 
-	row := p.sql.QueryRow(query, firebaseId)
-
-	var ev models.EventWithDetails
-	err := row.Scan(
-		&ev.ID,
-		&ev.EventCategoryID,
-		&ev.EventCategoryName,
-		&ev.Name,
-		&ev.EventOrganizer,
-		&ev.Description,
-		&ev.StartTime,
-		&ev.EndTime,
-		&ev.Location,
-		pq.Array(&ev.SessionNames),
-		&ev.TicketCount,
-		&ev.InvitationCount,
-	)
+	rows, err := p.sql.Query(query, firebaseId)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return models.EventWithDetails{}, nil
+		return nil, fmt.Errorf("failed to query events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []models.EventWithDetails
+
+	for rows.Next() {
+		var ev models.EventWithDetails
+		if err := rows.Scan(
+			&ev.ID,
+			&ev.EventCategoryID,
+			&ev.EventCategoryName,
+			&ev.Name,
+			&ev.EventOrganizer,
+			&ev.Description,
+			&ev.StartTime,
+			&ev.EndTime,
+			&ev.Location,
+			pq.Array(&ev.SessionNames),
+			&ev.TicketCount,
+			&ev.InvitationCount,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
-		return models.EventWithDetails{}, fmt.Errorf("failed to fetch event details: %w", err)
+		events = append(events, ev)
 	}
 
-	return ev, nil
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
+	}
+
+	return events, nil
 }
+
 
 func (p *PostgresDB) CreateEventCategory(e *models.EventCategoryRequest) (models.EventCategory, error) {
 	var eventCategoryID uuid.UUID

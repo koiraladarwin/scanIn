@@ -30,7 +30,7 @@ func (f *FirebaseAuth) AuthMiddleware(next http.Handler) http.Handler {
 			mockUser := &auth.UserRecord{
 				UserInfo: &auth.UserInfo{
 					UID:         "mock-uid-12345",
-					DisplayName: "Darwin Shrestha",
+					DisplayName: "Darwin Koirala",
 					Email:       "darwin@example.com",
 					PhotoURL:    "https://example.com/images/darwin.jpg",
 				},
