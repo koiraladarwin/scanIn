@@ -25,7 +25,7 @@ func (h *Handler) CreateEventCategory(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-  c.FirebaseID = fireBaseUser.UID
+	c.FirebaseID = fireBaseUser.UID
 	createdCategory, err := h.DB.CreateEventCategory(&c)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create Event Category")
@@ -57,7 +57,6 @@ func (h *Handler) GetEventCategories(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(category)
 }
-
 
 func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
@@ -138,15 +137,27 @@ func (h *Handler) AddEventWithEventCode(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err != nil {
-		log.Println("Failed to fetch event by code:2", err.Error())
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add staff to event")
-		return
-	}
-
 	json.NewEncoder(w).Encode(event)
 }
 
+func (h *Handler) GetEventsWithDetails(w http.ResponseWriter, r *http.Request) {
+	firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		log.Println("Unauthorized: no user in context")
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+
+	events, err := h.DB.GetEventsWithDetails(firebaseUser.UID)
+	if err != nil {
+		log.Println("Failed to fetch events:", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(events)
+
+}
 
 func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())

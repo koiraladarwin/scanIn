@@ -1,13 +1,65 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 
 	"github.com/google/uuid"
 	"github.com/koiraladarwin/scanin/models"
 	"github.com/koiraladarwin/scanin/utils"
+	"github.com/lib/pq"
 )
+
+func (p *PostgresDB) GetEventsWithDetails(firebaseId string) (models.EventWithDetails, error) {
+	query := `
+SELECT
+    e.id,
+    e.event_category_id,
+    ec.tag AS event_category_name,
+    e.name,
+    e.event_organizer,
+    e.description,
+    e.start_time,
+    e.end_time,
+    e.location,
+    COALESCE(array_agg(DISTINCT a.name) FILTER (WHERE a.deleted_at IS NULL), '{}') AS session_names,
+    COALESCE(COUNT(DISTINCT t.id) FILTER (WHERE t.price != 0), 0) AS ticket_count,
+    COALESCE(COUNT(DISTINCT t.id) FILTER (WHERE t.price = 0), 0) AS invitation_count
+FROM events e
+LEFT JOIN event_category ec ON e.event_category_id = ec.id
+LEFT JOIN activities a ON a.event_id = e.id
+LEFT JOIN ticket t ON t.event_id = e.id
+WHERE e.firebase_id = $1
+  AND e.deleted_at IS NULL
+GROUP BY e.id, ec.tag;`
+
+	row := p.sql.QueryRow(query, firebaseId)
+
+	var ev models.EventWithDetails
+	err := row.Scan(
+		&ev.ID,
+		&ev.EventCategoryID,
+		&ev.EventCategoryName,
+		&ev.Name,
+		&ev.EventOrganizer,
+		&ev.Description,
+		&ev.StartTime,
+		&ev.EndTime,
+		&ev.Location,
+		pq.Array(&ev.SessionNames),
+		&ev.TicketCount,
+		&ev.InvitationCount,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.EventWithDetails{}, fmt.Errorf("no event found for firebase_id: %s", firebaseId)
+		}
+		return models.EventWithDetails{}, fmt.Errorf("failed to fetch event details: %w", err)
+	}
+
+	return ev, nil
+}
 
 func (p *PostgresDB) CreateEventCategory(e *models.EventCategoryRequest) (models.EventCategory, error) {
 	var eventCategoryID uuid.UUID
@@ -21,7 +73,7 @@ func (p *PostgresDB) CreateEventCategory(e *models.EventCategoryRequest) (models
 	err := p.sql.QueryRow(query,
 		e.Tag,
 		e.Description,
-    e.FirebaseID,
+		e.FirebaseID,
 	).Scan(&eventCategoryID)
 
 	if err != nil {
@@ -36,7 +88,6 @@ func (p *PostgresDB) CreateEventCategory(e *models.EventCategoryRequest) (models
 
 	return createdEventCategory, nil
 }
-
 
 func (p *PostgresDB) GetEventCategories(firebaseID string) ([]models.EventCategory, error) {
 	query := `
@@ -67,7 +118,6 @@ func (p *PostgresDB) GetEventCategories(firebaseID string) ([]models.EventCatego
 	return categories, nil
 }
 
-
 func (p *PostgresDB) CreateEvent(e *models.EventCreateRequest) (models.Event, error) {
 	var eventID uuid.UUID
 	staffCode := utils.RandomString(6)
@@ -89,7 +139,7 @@ func (p *PostgresDB) CreateEvent(e *models.EventCreateRequest) (models.Event, er
 		staffCode,
 		adminCode,
 		e.FirebaseID,
-    e.EventOrganizer,
+		e.EventOrganizer,
 	).Scan(&eventID)
 
 	if err != nil {
@@ -139,8 +189,8 @@ FROM events
 		if err := rows.Scan(
 			&e.ID,
 			&e.Name,
-      &e.EventOrganizer,
-      &e.EventCategoryID,
+			&e.EventOrganizer,
+			&e.EventCategoryID,
 			&e.Description,
 			&e.StartTime,
 			&e.EndTime,
@@ -188,7 +238,7 @@ func (p *PostgresDB) GetEventByFirebaseUser(firebaseId string, eventId uuid.UUID
 	err := p.sql.QueryRow(query, eventId, firebaseId).Scan(
 		&e.ID,
 		&e.Name,
-    &e.EventOrganizer,
+		&e.EventOrganizer,
 		&e.Description,
 		&e.StartTime,
 		&e.EndTime,

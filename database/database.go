@@ -16,6 +16,7 @@ type Database interface {
 	DeleteUser(id uuid.UUID) error
 
 	CreateEventCategory(*models.EventCategoryRequest) (models.EventCategory, error)
+	GetEventsWithDetails(firebaseId string) (models.EventWithDetails, error)
 	GetEventCategories(firebase_id string) ([]models.EventCategory, error)
 	CreateEvent(*models.EventCreateRequest) (models.Event, error)
 	UpdateEvent(*models.EventModifyRequest) error

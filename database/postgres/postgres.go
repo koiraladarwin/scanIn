@@ -40,23 +40,23 @@ func (p *PostgresDB) createTables() error {
 		// 1. Events category table
 		`CREATE TABLE IF NOT EXISTS event_category(
      id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
-     firebase_id TEXT,
+     firebase_id TEXT NOT NULL,
      tag TEXT NOT NULL,
-     description TEXT,
+     description TEXT NOT NULL,
      deleted_at TIMESTAMPTZ
     );`,
 
 		// 1. Events table
 		`CREATE TABLE IF NOT EXISTS events (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      firebase_id TEXT,
+      firebase_id TEXT NOT NULL,
       event_category_id UUID REFERENCES event_category(id) ON DELETE SET NULL,
 			name TEXT NOT NULL,
       event_organizer TEXT NOT NULL,
-			description TEXT,
+			description TEXT NOT NULL,
 			start_time TIMESTAMPTZ NOT NULL,
 			end_time TIMESTAMPTZ NOT NULL,
-			location TEXT,
+			location TEXT NOT NULL,
 			admin_code TEXT NOT NULL UNIQUE,
 			staff_code TEXT NOT NULL UNIQUE,
 			deleted_at TIMESTAMPTZ
@@ -65,9 +65,9 @@ func (p *PostgresDB) createTables() error {
 		// 2. Users Category table
 		`CREATE TABLE IF NOT EXISTS users_category(
      id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
-     firebase_id TEXT,
+     firebase_id TEXT NOT NULL,
      tag TEXT NOT NULL,
-     description TEXT,
+     description TEXT NOT NULL, 
      deleted_at TIMESTAMPTZ
     );`,
 
@@ -75,7 +75,7 @@ func (p *PostgresDB) createTables() error {
 		`CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			auto_id INT NOT NULL,
-      firebase_id TEXT,
+      firebase_id TEXT NOT NULL,
 			full_name TEXT NOT NULL,
 			image_url TEXT NOT NULL,
 			company TEXT NOT NULL,
@@ -88,9 +88,9 @@ func (p *PostgresDB) createTables() error {
 		// 3. Ticket table category
 		`CREATE TABLE IF NOT EXISTS ticket_category(
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      firebase_id TEXT,
+      firebase_id TEXT NOT NULL,
       tag TEXT NOT NULL,
-      description TEXT,
+      description TEXT NOT NULL,
       type TEXT NOT NULL CHECK (type IN ('inv', 'tkt')),
       deleted_at TIMESTAMPTZ
       );
@@ -99,7 +99,7 @@ func (p *PostgresDB) createTables() error {
 		// 3. Ticket table
 		`CREATE TABLE IF NOT EXISTS ticket (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      firebase_id TEXT,
+      firebase_id TEXT NOT NULL,
       ticket_category_id UUID REFERENCES ticket_category(id) ON DELETE SET NULL,
       name TEXT NOT NULL,
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
@@ -133,7 +133,7 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       attendee_id UUID NOT NULL REFERENCES attendee(id) ON DELETE CASCADE,
       activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE, 
-			deleted_at TIMESTAMPTZ,
+			deleted_at TIMESTAMPTZ
 		);`,
 
 		// 6. Check-in logs table
@@ -153,9 +153,9 @@ func (p *PostgresDB) createTables() error {
 		// 7.Staff category table
 		`CREATE TABLE IF NOT EXISTS staff_category (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      firebase_id TEXT,
+      firebase_id TEXT NOT NULL,
       tag TEXT NOT NULL,
-      description TEXT,
+      description TEXT NOT NULL,
       deleted_at TIMESTAMPTZ
     );
     `,
@@ -163,11 +163,11 @@ func (p *PostgresDB) createTables() error {
 		// 7.Staff table
 		`CREATE TABLE IF NOT EXISTS staff (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      firebase_id TEXT,
+      firebase_id TEXT NOT NULL,
       staff_gmail TEXT NOT NULL UNIQUE,
       name TEXT NOT NULL,
-      image_url TEXT,
-      phone TEXT,
+      image_url TEXT NOT NULL,
+      phone TEXT NOT NULl,
       staff_category_id UUID REFERENCES staff_category(id) ON DELETE SET NULL,
       deleted_at TIMESTAMPTZ
     );
@@ -175,7 +175,7 @@ func (p *PostgresDB) createTables() error {
 		// 7.Staff enroll table
 		`CREATE TABLE IF NOT EXISTS staff_enroll (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      firebase_id TEXT,
+      firebase_id TEXT NOT NULL,
       staff_id UUID NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
       event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
       active BOOLEAN NOT NULL DEFAULT FALSE,
@@ -185,7 +185,7 @@ func (p *PostgresDB) createTables() error {
 		// 7. Staff activities table
 		`CREATE TABLE IF NOT EXISTS staff_activites (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      firebase_id TEXT,
+      firebase_id TEXT NOT NULL,
       staff_enroll_id UUID NOT NULL REFERENCES staff_enroll(id) ON DELETE CASCADE,
       activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
       deleted_at TIMESTAMPTZ,
