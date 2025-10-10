@@ -44,6 +44,7 @@ type Database interface {
 	GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInRespose, error)
 
 	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
+	CreateAttendeeActivityEnroll(a models.AttendeeActivity) (models.AttendeeActivity, error)
 
 	CreateTicket(a models.TicketRequest) (models.Ticket, error)
 	CreateTicketCategory(a models.TicketCategory) (models.TicketCategory, error)
@@ -55,5 +56,4 @@ type Database interface {
 	Close() error
 	CreateStaff(staffRequest *models.Staff) (*models.Staff, error)
 	GetStaffs(firebaseId string) ([]models.Staff, error)
-
 }

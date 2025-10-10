@@ -73,7 +73,8 @@ func main() {
 	Router.HandleFunc("/deleteattendee", handler.DeleteUser).Methods(constants.Delete)
 	Router.HandleFunc("/attendee/{event_id}", handler.GetUsersByEvent).Methods(constants.Get)
   
-  Router.HandleFunc("/enrollattendee", handler.CreateAttendee).Methods(constants.Post)
+  Router.HandleFunc("/enrollattendeeevent", handler.CreateAttendee).Methods(constants.Post)
+  Router.HandleFunc("/enrollattendeeactivity", handler.CreateAttendeeActivityEnroll).Methods(constants.Post)
 
   Router.HandleFunc("/ticket", handler.CreateTicket).Methods(constants.Post) 
   Router.HandleFunc("/ticketcategory", handler.CreateTicketCategory).Methods(constants.Post) 

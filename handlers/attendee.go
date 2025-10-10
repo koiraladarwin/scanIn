@@ -41,3 +41,34 @@ func (h *Handler) CreateAttendee(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(attendee)
 
 }
+
+func (h *Handler) CreateAttendeeActivityEnroll(w http.ResponseWriter, r *http.Request) {
+  _, ok := firebaseauth.FbUserFromContext(r.Context())
+  if !ok {
+    http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+    return
+  }
+
+  var attendeeActivityReq models.AttendeeActivity
+  err := json.NewDecoder(r.Body).Decode(&attendeeActivityReq)
+  if err != nil {
+    http.Error(w, "Invalid request payload", http.StatusBadRequest)
+    return
+  }
+
+  if  attendeeActivityReq.AttendeeID == uuid.Nil || attendeeActivityReq.ActivityID == uuid.Nil {
+    http.Error(w, "Missing required fields", http.StatusBadRequest)
+    return
+  }
+
+  attendeeActivityLog, err := h.DB.CreateAttendeeActivityEnroll(attendeeActivityReq)
+  if err != nil {
+    log.Println("Error creating attendee activity log:", err)
+    http.Error(w, "Failed to create attendee activity log", http.StatusInternalServerError)
+    return
+  }
+
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(attendeeActivityLog)
+
+}
