@@ -36,6 +36,7 @@ type Event struct {
 	FirebaseID          string    `json:"firebase_id"`
 	EventCategoryID     uuid.UUID `json:"event_category_id"`
 	Name                string    `json:"name"`
+	EventOrganizer      string    `json:"event_organizer"`
 	Description         string    `json:"description"`
 	StartTime           time.Time `json:"start_time"`
 	EndTime             time.Time `json:"end_time"`
@@ -50,6 +51,7 @@ type EventCreateRequest struct {
 	Name                string    `json:"name"`
 	EventCategoryID     uuid.UUID `json:"event_category_id"`
 	FirebaseID          string    `json:"firebase_id"`
+	EventOrganizer      string    `json:"event_organizer"`
 	Description         string    `json:"description"`
 	StartTime           time.Time `json:"start_time"`
 	EndTime             time.Time `json:"end_time"`

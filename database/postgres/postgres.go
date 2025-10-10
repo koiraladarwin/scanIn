@@ -52,6 +52,7 @@ func (p *PostgresDB) createTables() error {
       firebase_id TEXT,
       event_category_id UUID REFERENCES event_category(id) ON DELETE SET NULL,
 			name TEXT NOT NULL,
+      event_organizer TEXT NOT NULL,
 			description TEXT,
 			start_time TIMESTAMPTZ NOT NULL,
 			end_time TIMESTAMPTZ NOT NULL,

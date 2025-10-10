@@ -74,7 +74,7 @@ func (p *PostgresDB) CreateEvent(e *models.EventCreateRequest) (models.Event, er
 	adminCode := utils.RandomString(7)
 
 	query := `
-  INSERT INTO events (name, event_category_id, description, start_time, end_time, location, staff_code, admin_code,firebase_id)
+  INSERT INTO events (name, event_category_id, description, start_time, end_time, location, staff_code, admin_code,firebase_id,event_organizer)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id;
 	`
@@ -89,6 +89,7 @@ func (p *PostgresDB) CreateEvent(e *models.EventCreateRequest) (models.Event, er
 		staffCode,
 		adminCode,
 		e.FirebaseID,
+    e.EventOrganizer,
 	).Scan(&eventID)
 
 	if err != nil {
@@ -114,6 +115,7 @@ func (p *PostgresDB) GetEventsByFirebaseUser(firebaseId string) ([]models.Event,
 SELECT 
     id,
     name,
+    event_organizer,
     event_category_id,
     description,
     start_time,
@@ -137,6 +139,7 @@ FROM events
 		if err := rows.Scan(
 			&e.ID,
 			&e.Name,
+      &e.EventOrganizer,
       &e.EventCategoryID,
 			&e.Description,
 			&e.StartTime,
@@ -165,6 +168,7 @@ func (p *PostgresDB) GetEventByFirebaseUser(firebaseId string, eventId uuid.UUID
 	SELECT
 		e.id,
 		e.name,
+    e.event_organizer,
 		e.description,
 		e.start_time,
 		e.end_time,
@@ -184,6 +188,7 @@ func (p *PostgresDB) GetEventByFirebaseUser(firebaseId string, eventId uuid.UUID
 	err := p.sql.QueryRow(query, eventId, firebaseId).Scan(
 		&e.ID,
 		&e.Name,
+    &e.EventOrganizer,
 		&e.Description,
 		&e.StartTime,
 		&e.EndTime,
