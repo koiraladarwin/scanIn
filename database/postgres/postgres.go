@@ -115,7 +115,7 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
 			name TEXT NOT NULL,
-			type TEXT NOT NULL,
+			hall_name TEXT NOT NULL,
 			start_time TIMESTAMPTZ NOT NULL,
 			end_time TIMESTAMPTZ NOT NULL,
 			deleted_at TIMESTAMPTZ

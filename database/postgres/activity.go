@@ -8,16 +8,16 @@ import (
 func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.Activity, error) {
 	var activity models.Activity
 	query := `
-		INSERT INTO activities (event_id, name, type, start_time, end_time ,firebase_id) 
+		INSERT INTO activities (event_id, name, hall_name, start_time, end_time ,firebase_id) 
 		VALUES ($1, $2, $3, $4, $5 ,%6)
-		RETURNING id, event_id, name, type, start_time, end_time
+		RETURNING id, event_id, name, hall_name, start_time, end_time
 	`
 
 	err := p.sql.QueryRow(
 		query,
 		a.EventID,
 		a.Name,
-		a.Type,
+		a.HallName,
 		a.StartTime,
 		a.EndTime,
 		a.FirebaseID,
@@ -25,7 +25,7 @@ func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.Ac
 		&activity.ID,
 		&activity.EventID,
 		&activity.Name,
-		&activity.Type,
+		&activity.HallName,
 		&activity.StartTime,
 		&activity.EndTime,
 	)
@@ -43,7 +43,7 @@ SELECT
     a.id,
     a.event_id,
     a.name,
-    a.type,
+    a.hall_name,
     a.start_time,
     a.end_time,
     COUNT(t.id) FILTER (WHERE t.price = 0) AS ticket_count,
@@ -71,7 +71,7 @@ GROUP BY a.id;
 			&act.ID,
 			&act.EventID,
 			&act.Name,
-			&act.Type,
+			&act.HallName,
 			&act.StartTime,
 			&act.EndTime,
 			&act.TicketCount,
@@ -93,8 +93,8 @@ GROUP BY a.id;
 func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
 	scannedUsers := 0
 	a := &models.Activity{}
-	query := `SELECT id, event_id, name, type, start_time, end_time FROM activities WHERE id = $1 AND delete_at IS NULL`
-	err := p.sql.QueryRow(query, id).Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime)
+	query := `SELECT id, event_id, name, hall_name, start_time, end_time FROM activities WHERE id = $1 AND delete_at IS NULL`
+	err := p.sql.QueryRow(query, id).Scan(&a.ID, &a.EventID, &a.Name, &a.HallName, &a.StartTime, &a.EndTime)
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +104,8 @@ func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
 }
 
 func (p *PostgresDB) UpdateActivity(a *models.Activity) error {
-	query := `UPDATE activities SET event_id=$1, name=$2, type=$3, start_time=$4, end_time=$5 WHERE id=$6`
-	_, err := p.sql.Exec(query, a.EventID, a.Name, a.Type, a.StartTime, a.EndTime, a.ID)
+	query := `UPDATE activities SET event_id=$1, name=$2, hall_name=$3, start_time=$4, end_time=$5 WHERE id=$6`
+	_, err := p.sql.Exec(query, a.EventID, a.Name, a.HallName, a.StartTime, a.EndTime, a.ID)
 	return err
 }
 
@@ -122,7 +122,7 @@ SELECT
   a.id,
   a.event_id,
   a.name,
-  a.type,
+  a.hall_name,
   a.start_time,
   a.end_time,
   CASE
@@ -148,7 +148,7 @@ WHERE a.event_id = $1 AND a.delete_at IS NULL;
 
 	for rows.Next() {
 		var a models.Activity
-		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.Type, &a.StartTime, &a.EndTime, &a.NumberOfScanedUsers); err != nil {
+		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.HallName, &a.StartTime, &a.EndTime, &a.NumberOfScanedUsers); err != nil {
 			return nil, err
 		}
 		activities = append(activities, a)

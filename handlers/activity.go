@@ -24,7 +24,7 @@ func (h *Handler) CreateActivity(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-	if c.EventID.String() == "" || c.Name == "" || c.Type == "" || c.StartTime.IsZero() || c.EndTime.IsZero() {
+	if c.EventID.String() == "" || c.Name == "" || c.HallName == "" || c.StartTime.IsZero() || c.EndTime.IsZero() {
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing required fields")
 		return
 	}

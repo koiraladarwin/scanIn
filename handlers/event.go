@@ -180,8 +180,22 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
 		return
 	}
+  eventsResp := make([]models.EventResponse, len(events))
+  for i, event := range events {
+    eventsResp[i] = models.EventResponse{
+      ID: event.ID,
+      EventCategoryID: event.EventCategoryID,
+      Name: event.Name,
+      EventOrganizer: event.EventOrganizer,
+      Description: event.Description,
+      StartTime: event.StartTime,
+      EndTime: event.EndTime,
+      Location: event.Location,
+    }
+  }
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(events)
+	json.NewEncoder(w).Encode(eventsResp)
 }
 
 func (h *Handler) GetEventInfo(w http.ResponseWriter, r *http.Request) {
