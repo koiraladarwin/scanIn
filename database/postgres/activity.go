@@ -5,12 +5,11 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-
 func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.Activity, error) {
 	var activity models.Activity
 	query := `
-		INSERT INTO activities (event_id, name, type, start_time, end_time) 
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO activities (event_id, name, type, start_time, end_time ,firebase_id) 
+		VALUES ($1, $2, $3, $4, $5 ,%6)
 		RETURNING id, event_id, name, type, start_time, end_time
 	`
 
@@ -21,6 +20,7 @@ func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.Ac
 		a.Type,
 		a.StartTime,
 		a.EndTime,
+		a.FirebaseID,
 	).Scan(
 		&activity.ID,
 		&activity.EventID,
@@ -37,6 +37,58 @@ func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.Ac
 	return &activity, nil
 }
 
+func (p *PostgresDB) GetActivitiesDetails(firebaseId string) ([]models.ActivityDetails, error) {
+	query := `
+SELECT
+    a.id,
+    a.event_id,
+    a.name,
+    a.type,
+    a.start_time,
+    a.end_time,
+    COUNT(t.id) FILTER (WHERE t.price = 0) AS ticket_count,
+    COUNT(t.id) FILTER (WHERE t.price != 0) AS invitation_count
+FROM activities a
+LEFT JOIN attendee_activities aa ON aa.activity_id = a.id
+LEFT JOIN attendee at ON at.id = aa.attendee_id
+LEFT JOIN ticket t ON t.id = at.ticket_id
+WHERE a.deleted_at IS NULL
+  AND a.firebase_id = $1
+GROUP BY a.id;
+`
+
+	rows, err := p.sql.Query(query, firebaseId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var activities []models.ActivityDetails
+
+	for rows.Next() {
+		var act models.ActivityDetails
+		err := rows.Scan(
+			&act.ID,
+			&act.EventID,
+			&act.Name,
+			&act.Type,
+			&act.StartTime,
+			&act.EndTime,
+			&act.TicketCount,
+			&act.InvitationCount,
+		)
+		if err != nil {
+			return nil, err
+		}
+		activities = append(activities, act)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return activities, nil
+}
 
 func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
 	scannedUsers := 0
@@ -62,7 +114,7 @@ func (p *PostgresDB) DeleteActivity(id uuid.UUID) error {
 	return err
 }
 
-func (p *PostgresDB) GetActivitiesByEvent(firebaseId string,eventID uuid.UUID) ([]models.Activity, error) {
+func (p *PostgresDB) GetActivitiesByEvent(firebaseId string, eventID uuid.UUID) ([]models.Activity, error) {
 	activities := []models.Activity{}
 
 	query := `
@@ -104,4 +156,3 @@ WHERE a.event_id = $1 AND a.delete_at IS NULL;
 
 	return activities, nil
 }
-	

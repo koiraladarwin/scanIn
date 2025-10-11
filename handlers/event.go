@@ -71,11 +71,10 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c.FirebaseID = fireBaseUser.UID
-	log.Print("create event request: ", c)
-	log.Print("firebase user uid", fireBaseUser.UID)
 	_, err := h.DB.CreateEvent(&c)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create Event")
+    log.Println("Failed to create Event:", err.Error())
 		return
 	}
 
@@ -161,6 +160,7 @@ func (h *Handler) GetEventsWithDetails(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(events)
 

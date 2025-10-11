@@ -135,7 +135,7 @@ func (p *PostgresDB) CreateEvent(e *models.EventCreateRequest) (models.Event, er
 
 	query := `
   INSERT INTO events (name, event_category_id, description, start_time, end_time, location, staff_code, admin_code,firebase_id,event_organizer)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id;
 	`
 

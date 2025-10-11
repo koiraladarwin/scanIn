@@ -25,6 +25,8 @@ type Ticket struct {
 	Price            float64 `json:"price"`
 	Paid             bool    `json:"paid"`
 	Name             string  `json:"name"`
+	StartTime        string  `json:"start_time"`
+	EndTime          string  `json:"end_time"`
 	DeletedAt        *string `json:"deleted_at"`
 }
 
@@ -35,6 +37,8 @@ type TicketRequest struct {
 	Price            float64   `json:"price"`
 	Name             string    `json:"name"`
 	Paid             bool      `json:"paid"`
+	StartTime        string    `json:"start_time"`
+	EndTime          string    `json:"end_time"`
 }
 
 type TicketResponse struct {
@@ -44,11 +48,15 @@ type TicketResponse struct {
 	Price            float64 `json:"price"`
 	Name             string  `json:"name"`
 	Paid             bool    `json:"paid"`
+	StartTime        string  `json:"start_time"`
+	EndTime          string  `json:"end_time"`
 }
 
-type InviteeResponse struct {
+type InvitationResponse struct {
 	ID               string `json:"id"`
 	TicketCategoryID string `json:"ticket_category_id"`
 	EventID          string `json:"event_id"`
 	Name             string `json:"name"`
+	StartTime        string `json:"start_time"`
+	EndTime          string `json:"end_time"`
 }

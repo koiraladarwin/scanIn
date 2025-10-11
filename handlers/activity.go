@@ -11,24 +11,6 @@ import (
 	"github.com/koiraladarwin/scanin/utils"
 )
 
-/*
-CreateActivity accepts JSON:
-
-	{
-	  "event_id": "uuid-string",
-	  "name": "string",
-	  "type": "string",
-	  "start_time": "2025-07-08T15:30:00Z",
-	  "end_time": "2025-07-09T15:30:00Z",
-	  "location": "string"
-	}
-
-Returns:
-- 201 Created with created check-in JSON on success
-- 400 Bad Request for invalid input
-- 500 Internal Server Error on DB failure
-*/
-
 // todo: make sure the eventid belong to the same firebase user
 func (h *Handler) CreateActivity(w http.ResponseWriter, r *http.Request) {
 	_, ok := firebaseauth.FbUserFromContext(r.Context())
@@ -56,27 +38,9 @@ func (h *Handler) CreateActivity(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(activity)
 }
 
-/*
-UpdateActivity accepts JSON:
+func(h *Handler)GetActivitiesDetails(){}
 
-	{
-	  "name": "string",
-	  "type": "string",
-	  "start_time": "2025-07-08T15:30:00Z",
-	  "end_time": "2025-07-09T15:30:00Z",
-	  "location": "string"
-	}
 
-Path Param:
-
-	activity_id (uuid-string)
-
-Returns:
-- 200 OK with updated activity JSON on success
-- 400 Bad Request for invalid input
-- 404 Not Found if activity doesn’t exist
-- 500 Internal Server Error on DB failure
-*/
 func (h *Handler) UpdateActivity(w http.ResponseWriter, r *http.Request) {
 	var activity models.Activity
 	err := json.NewDecoder(r.Body).Decode(&activity)

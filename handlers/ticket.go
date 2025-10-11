@@ -137,6 +137,7 @@ func (h *Handler) GetInviteeCategories(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(ticketCategoriesres)
 }
 
+//todo: make sure ticket category and event belongs to user creating ticket 
 func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 	firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
@@ -164,7 +165,7 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ticketReq.FirebaseID = firebaseUser.UID
-  ticketReq.Paid = false 
+	ticketReq.Paid = false
 
 	ticket, err := h.DB.CreateTicket(ticketReq)
 	if err != nil {
@@ -172,14 +173,16 @@ func (h *Handler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error creating ticket:", err)
 		return
 	}
-  ticketRes := models.TicketResponse{
-      ID:               ticket.ID,
-      TicketCategoryID: ticket.TicketCategoryID,
-      EventID:          ticket.EventID,
-      Price:            ticket.Price,
-      Name:             ticket.Name,
-      Paid:             ticket.Paid,
-  }
+	ticketRes := models.TicketResponse{
+		ID:               ticket.ID,
+		TicketCategoryID: ticket.TicketCategoryID,
+		EventID:          ticket.EventID,
+		Price:            ticket.Price,
+		Name:             ticket.Name,
+		Paid:             ticket.Paid,
+		StartTime:        ticket.StartTime,
+		EndTime:          ticket.EndTime,
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ticketRes)
 }
@@ -203,7 +206,7 @@ func (h *Handler) CreateInvitee(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing or invalid required fields", http.StatusBadRequest)
 		return
 	}
-  
+
 	ticketCategory, err := h.DB.GetTicketCategory(firebaseUser.UID, ticketReq.TicketCategoryID)
 	if err != nil || ticketCategory.Type != "inv" {
 		http.Error(w, "Invalid ticket category id", http.StatusBadRequest)
@@ -212,7 +215,7 @@ func (h *Handler) CreateInvitee(w http.ResponseWriter, r *http.Request) {
 
 	ticketReq.FirebaseID = firebaseUser.UID
 	ticketReq.Price = 0
-  ticketReq.Paid = true
+	ticketReq.Paid = true
 
 	ticket, err := h.DB.CreateTicket(ticketReq)
 	if err != nil {
@@ -221,12 +224,14 @@ func (h *Handler) CreateInvitee(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-  inviteeRes := models.InviteeResponse{
-      ID:               ticket.ID,
-      TicketCategoryID: ticket.TicketCategoryID, 
-      EventID:          ticket.EventID,
-      Name:             ticket.Name,
-  }
+	inviteeRes := models.InvitationResponse{
+		ID:               ticket.ID,
+		TicketCategoryID: ticket.TicketCategoryID,
+		EventID:          ticket.EventID,
+		Name:             ticket.Name,
+		StartTime:        ticket.StartTime,
+		EndTime:          ticket.EndTime,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(inviteeRes)
