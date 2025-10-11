@@ -118,7 +118,8 @@ func (p *PostgresDB) createTables() error {
 			hall_name TEXT NOT NULL,
 			start_time TIMESTAMPTZ NOT NULL,
 			end_time TIMESTAMPTZ NOT NULL,
-			deleted_at TIMESTAMPTZ
+			deleted_at TIMESTAMPTZ,
+      firebase_id TEXT NOT NULL
 		);`,
 
 		// 5. Attendee table

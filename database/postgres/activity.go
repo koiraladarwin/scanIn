@@ -9,7 +9,7 @@ func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.Ac
 	var activity models.Activity
 	query := `
 		INSERT INTO activities (event_id, name, hall_name, start_time, end_time ,firebase_id) 
-		VALUES ($1, $2, $3, $4, $5 ,%6)
+		VALUES ($1, $2, $3, $4, $5 ,$6)
 		RETURNING id, event_id, name, hall_name, start_time, end_time
 	`
 
@@ -49,7 +49,7 @@ SELECT
     COUNT(t.id) FILTER (WHERE t.price = 0) AS ticket_count,
     COUNT(t.id) FILTER (WHERE t.price != 0) AS invitation_count
 FROM activities a
-LEFT JOIN attendee_activities aa ON aa.activity_id = a.id
+LEFT JOIN attendee_activity aa ON aa.activity_id = a.id
 LEFT JOIN attendee at ON at.id = aa.attendee_id
 LEFT JOIN ticket t ON t.id = at.ticket_id
 WHERE a.deleted_at IS NULL
