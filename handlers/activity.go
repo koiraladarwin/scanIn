@@ -63,3 +63,25 @@ func (h *Handler) UpdateActivity(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(activity)
 }
+
+func (h *Handler) GetAcivityWithDetails(w http.ResponseWriter, r *http.Request){
+  fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+  if !ok {
+    utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized: no user in context")
+    return
+  }
+  activities, err := h.DB.GetActivitiesDetails(fireBaseUser.UID)
+  if err != nil {
+    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activities")
+    return
+  }
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(activities)
+}
+
+
+
+
+
+
+

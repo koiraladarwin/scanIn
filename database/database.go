@@ -29,6 +29,7 @@ type Database interface {
 	GetEventByStaffId(id string) (*models.Event, error)
 
 	CreateActivity(*models.ActivityCreateRequest) (*models.Activity, error)
+	GetActivitiesDetails(firebaseId string) ([]models.ActivityDetails, error)
 	GetActivity(id uuid.UUID) (*models.Activity, error)
 	UpdateActivity(*models.Activity) error
 	DeleteActivity(id uuid.UUID) error
