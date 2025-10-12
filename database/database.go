@@ -55,7 +55,10 @@ type Database interface {
 
 	CreateStaffCategory(staffCategoryRequest *models.StaffCategory) (*models.StaffCategory, error)
 	GetStaffCategories(firebaseId string) ([]models.StaffCategory, error)
-	Close() error
 	CreateStaff(staffRequest *models.Staff) (*models.Staff, error)
 	GetStaffs(firebaseId string) ([]models.Staff, error)
+	CreateStaffEventEnroll(staffEnrollRequest *models.StaffEnroll) (*models.StaffEnroll, error)
+	GetStaffEventEnroll(firebaseId string, eventId uuid.UUID) (models.StaffEnroll, error)
+	CreateStaffActivityAssign(staffActivityRequest *models.StaffActivities) (*models.StaffActivities, error)
+	Close() error
 }
