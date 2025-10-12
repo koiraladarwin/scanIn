@@ -61,7 +61,7 @@ func (h *Handler) CreateInviteeCategory(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if ticketCategoryReq.Tag == "" || ticketCategoryReq.Description == "" {
+	if ticketCategoryReq.Tag == ""  {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
