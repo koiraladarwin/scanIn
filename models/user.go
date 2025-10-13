@@ -31,6 +31,7 @@ type User struct {
 	Position        string    `json:"position"`
 	Image_url       string    `json:"image_url"`
 	AutoId          int       `json:"auto_id"`
+	PhoneNumber     string    `json:"phone_number"`
 	UsersCategoryID string    `json:"attendee_category_id"`
 }
 
@@ -41,6 +42,7 @@ type UserModifyRequest struct {
 	Position        string    `json:"position"`
 	Image_url       string    `json:"image_url"`
 	AutoId          int       `json:"auto_id"`
+	PhoneNumber     string    `json:"phone_number"`
 	UsersCategoryID string    `json:"attendee_category_id"`
 }
 
@@ -50,5 +52,6 @@ type UserRequest struct {
 	Company         string `json:"company"`
 	Position        string `json:"position"`
 	Image_url       string `json:"image_url"`
+	PhoneNumber     string `json:"phone_number"`
 	UsersCategoryID string `json:"attendee_category_id"`
 }

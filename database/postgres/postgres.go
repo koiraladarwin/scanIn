@@ -76,6 +76,7 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			auto_id INT NOT NULL,
       firebase_id TEXT NOT NULL,
+      phone_number TEXT NOT NULL,
 			full_name TEXT NOT NULL,
 			image_url TEXT NOT NULL,
 			company TEXT NOT NULL,
@@ -172,6 +173,8 @@ func (p *PostgresDB) createTables() error {
       name TEXT NOT NULL,
       image_url TEXT NOT NULL,
       phone TEXT NOT NULl,
+      company TEXT NOT NULL,
+      position TEXT NOT NULL, 
       staff_category_id UUID REFERENCES staff_category(id) ON DELETE SET NULL,
       deleted_at TIMESTAMPTZ
     );

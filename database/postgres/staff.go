@@ -51,8 +51,8 @@ func (p *PostgresDB) GetStaffCategories(firebaseId string) ([]models.StaffCatego
 func (p *PostgresDB) CreateStaff(staffRequest *models.Staff) (*models.Staff, error) {
 	var staff models.Staff
 	query := `
-  INSERT INTO staff (firebase_id, staff_gmail, name, image_url, phone, staff_category_id)
-  VALUES ($1, $2, $3, $4, $5, $6)
+  INSERT INTO staff (firebase_id, staff_gmail, name, image_url, phone, staff_category_id,company, position)
+  VALUES ($1, $2, $3, $4, $5, $6 ,$7, $8)
   RETURNING id
   `
 	err := p.sql.QueryRow(
@@ -63,6 +63,8 @@ func (p *PostgresDB) CreateStaff(staffRequest *models.Staff) (*models.Staff, err
 		staffRequest.ImageURL,
 		staffRequest.Phone,
 		staffRequest.StaffCategoryID,
+		staffRequest.Company,
+		staffRequest.Position,
 	).Scan(&staff.ID)
 	if isUniqueViolationError(err) {
 		return nil, db.ErrAlreadyExists
@@ -78,7 +80,7 @@ func (p *PostgresDB) CreateStaff(staffRequest *models.Staff) (*models.Staff, err
 }
 
 func (p *PostgresDB) GetStaffs(firebaseId string) ([]models.Staff, error) {
-	query := `SELECT id, firebase_id, staff_gmail, name, image_url, phone, staff_category_id FROM staff WHERE firebase_id=$1 AND deleted_at IS NULL`
+	query := `SELECT id, firebase_id, staff_gmail, name, image_url, phone, staff_category_id ,company ,position FROM staff WHERE firebase_id=$1 AND deleted_at IS NULL`
 	rows, err := p.sql.Query(query, firebaseId)
 	if err != nil {
 		return nil, err
@@ -87,7 +89,7 @@ func (p *PostgresDB) GetStaffs(firebaseId string) ([]models.Staff, error) {
 	var staffs []models.Staff
 	for rows.Next() {
 		var s models.Staff
-		if err := rows.Scan(&s.ID, &s.FirebaseID, &s.StaffGmail, &s.Name, &s.ImageURL, &s.Phone, &s.StaffCategoryID); err != nil {
+		if err := rows.Scan(&s.ID, &s.FirebaseID, &s.StaffGmail, &s.Name, &s.ImageURL, &s.Phone, &s.StaffCategoryID, &s.Company, &s.Position); err != nil {
 			return nil, err
 		}
 		staffs = append(staffs, s)

@@ -148,6 +148,8 @@ func (h *Handler) GetStaffs(w http.ResponseWriter, r *http.Request) {
 			ImageURL:        staffs[i].ImageURL,
 			Phone:           staffs[i].Phone,
 			StaffCategoryID: staffs[i].StaffCategoryID,
+			Company:         staffs[i].Company,
+			Position:        staffs[i].Position,
 		}
 	}
 
@@ -155,7 +157,7 @@ func (h *Handler) GetStaffs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(staffsResponse)
 }
 
-//todo: check if activity belongs to event and staff,event,activity belongs to firebase user
+// todo: check if activity belongs to event and staff,event,activity belongs to firebase user
 func (h *Handler) CreateStaffEnrollment(w http.ResponseWriter, r *http.Request) {
 	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
 	if !ok {
@@ -176,7 +178,7 @@ func (h *Handler) CreateStaffEnrollment(w http.ResponseWriter, r *http.Request) 
 
 	eventUUID, err := uuid.Parse(se.EventID)
 	if err != nil {
-    log.Println("Error parsing event ID:", err)
+		log.Println("Error parsing event ID:", err)
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid event ID format")
 		return
 	}
@@ -217,4 +219,3 @@ func (h *Handler) CreateStaffEnrollment(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 }
-

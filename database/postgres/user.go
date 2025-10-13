@@ -32,22 +32,22 @@ func (p *PostgresDB) CreateUserCategory(reqUserCat *models.UsersCategoryRequest)
 	return &userCat, err
 }
 
-func (p *PostgresDB) GetUserCategories(firebaseId string)([]models.UsersCategory,error){
-  query := `SELECT id, firebase_id, tag, description FROM users_category WHERE firebase_id=$1 AND deleted_at IS NULL`
-  rows, err := p.sql.Query(query, firebaseId)
-  if err != nil {
-    return nil, err
-  }
-  defer rows.Close()
-  var userCategories []models.UsersCategory
-  for rows.Next() {
-    var uc models.UsersCategory
-    if err := rows.Scan(&uc.ID, &uc.FirebaseID, &uc.Tag, &uc.Description); err != nil {
-      return nil, err
-    }
-    userCategories = append(userCategories, uc)
-  }
-  return userCategories, nil
+func (p *PostgresDB) GetUserCategories(firebaseId string) ([]models.UsersCategory, error) {
+	query := `SELECT id, firebase_id, tag, description FROM users_category WHERE firebase_id=$1 AND deleted_at IS NULL`
+	rows, err := p.sql.Query(query, firebaseId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var userCategories []models.UsersCategory
+	for rows.Next() {
+		var uc models.UsersCategory
+		if err := rows.Scan(&uc.ID, &uc.FirebaseID, &uc.Tag, &uc.Description); err != nil {
+			return nil, err
+		}
+		userCategories = append(userCategories, uc)
+	}
+	return userCategories, nil
 }
 
 func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, error) {
@@ -62,8 +62,8 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 	autoId := lastAutoID + 1
 
 	query := `
-		INSERT INTO users (auto_id, full_name, image_url, position, company, users_category_id,firebase_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO users (auto_id, full_name, image_url, position, company, users_category_id,firebase_id, phone_number)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
 	`
 	err = p.sql.QueryRow(
@@ -75,6 +75,7 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 		reqUser.Company,
 		reqUser.UsersCategoryID,
 		reqUser.FirebaseID,
+		reqUser.PhoneNumber,
 	).Scan(&user.ID)
 
 	if isUniqueViolationError(err) {
@@ -86,13 +87,14 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 	user.Image_url = reqUser.Image_url
 	user.AutoId = autoId
 	user.UsersCategoryID = reqUser.UsersCategoryID
+	user.PhoneNumber = reqUser.PhoneNumber
 
 	return &user, err
 }
 
 func (p *PostgresDB) GetUsers(firebaseid string) ([]models.User, error) {
 	var users []models.User
-	query := `SELECT id, full_name, auto_id, image_url, position, company ,users_category_id FROM users WHERE firebase_id=$1 AND deleted_at IS NULL`
+	query := `SELECT id, full_name, auto_id, image_url, position, company ,users_category_id, phone_number FROM users WHERE firebase_id=$1 AND deleted_at IS NULL`
 	rows, err := p.sql.Query(query, firebaseid)
 	if err != nil {
 		fmt.Println("Error fetching users:", err)
@@ -101,7 +103,7 @@ func (p *PostgresDB) GetUsers(firebaseid string) ([]models.User, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var u models.User
-		if err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.UsersCategoryID); err != nil {
+		if err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.UsersCategoryID, &u.PhoneNumber); err != nil {
 			fmt.Println("Error scanning user:", err)
 			return nil, err
 		}

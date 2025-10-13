@@ -9,6 +9,8 @@ type Staff struct {
 	Phone           string `json:"phone"`
 	StaffCategoryID string `json:"staff_category_id"`
 	DeletedAt       string `json:"deleted_at"`
+  Company         string `json:"company"`
+  Position        string `json:"position"`
 }
 
 type StaffResponse struct {
@@ -18,6 +20,8 @@ type StaffResponse struct {
 	ImageURL        string `json:"image_url"`
 	Phone           string `json:"phone"`
 	StaffCategoryID string `json:"staff_category_id"`
+  Company         string `json:"company"`
+  Position        string `json:"position"`
 }
 
 type StaffCategory struct {
