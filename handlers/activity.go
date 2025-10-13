@@ -46,7 +46,7 @@ func(h *Handler)GetActivitiesDetails(){}
 
 
 func (h *Handler) UpdateActivity(w http.ResponseWriter, r *http.Request) {
-	var activity models.Activity
+	var activity models.ActivityWithScannedUser
 	err := json.NewDecoder(r.Body).Decode(&activity)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")

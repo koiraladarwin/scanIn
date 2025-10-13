@@ -119,6 +119,8 @@ func (h *Handler) CreateStaff(w http.ResponseWriter, r *http.Request) {
 		ImageURL:        staff.ImageURL,
 		Phone:           staff.Phone,
 		StaffCategoryID: staff.StaffCategoryID,
+    Company:         staff.Company,
+    Position:        staff.Position,
 	}
 
 	w.WriteHeader(http.StatusCreated)

@@ -17,6 +17,7 @@ type Database interface {
 
 	CreateEventCategory(*models.EventCategoryRequest) (models.EventCategory, error)
 	GetEventsWithDetails(firebaseId string) ([]models.EventWithDetails, error)
+	GetEventsWithSessions(firebaseId string) ([]models.EventwithSessions, error)
 	GetEventCategories(firebase_id string) ([]models.EventCategory, error)
 	CreateEvent(*models.EventCreateRequest) (models.Event, error)
 	UpdateEvent(*models.EventModifyRequest) error
@@ -28,12 +29,12 @@ type Database interface {
 	GetEventByAdminId(id string) (*models.Event, error)
 	GetEventByStaffId(id string) (*models.Event, error)
 
-	CreateActivity(*models.ActivityCreateRequest) (*models.Activity, error)
+	CreateActivity(*models.ActivityCreateRequest) (*models.ActivityWithScannedUser, error)
 	GetActivitiesDetails(firebaseId string) ([]models.ActivityDetails, error)
-	GetActivity(id uuid.UUID) (*models.Activity, error)
-	UpdateActivity(*models.Activity) error
+	GetActivity(id uuid.UUID) (*models.ActivityWithScannedUser, error)
+	UpdateActivity(*models.ActivityWithScannedUser) error
 	DeleteActivity(id uuid.UUID) error
-	GetActivitiesByEvent(firebaseId string, eventID uuid.UUID) ([]models.Activity, error)
+	GetActivitiesByEvent(firebaseId string, eventID uuid.UUID) ([]models.ActivityWithScannedUser, error)
 	GetEventIdByActivity(activityId uuid.UUID) (uuid.UUID, error)
 
 	CreateCheckInLog(*models.CheckInLog) (*models.CheckInLog, error)

@@ -51,7 +51,7 @@ func (p *PostgresDB) GetStaffCategories(firebaseId string) ([]models.StaffCatego
 func (p *PostgresDB) CreateStaff(staffRequest *models.Staff) (*models.Staff, error) {
 	var staff models.Staff
 	query := `
-  INSERT INTO staff (firebase_id, staff_gmail, name, image_url, phone, staff_category_id,company, position)
+  INSERT INTO staff (firebase_id, staff_gmail, name, image_url, phone, staff_category_id, company, position)
   VALUES ($1, $2, $3, $4, $5, $6 ,$7, $8)
   RETURNING id
   `
@@ -75,6 +75,8 @@ func (p *PostgresDB) CreateStaff(staffRequest *models.Staff) (*models.Staff, err
 	staff.ImageURL = staffRequest.ImageURL
 	staff.Phone = staffRequest.Phone
 	staff.StaffCategoryID = staffRequest.StaffCategoryID
+  staff.Company = staffRequest.Company
+  staff.Position = staffRequest.Position
 
 	return &staff, err
 }

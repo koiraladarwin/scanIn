@@ -5,8 +5,8 @@ import (
 	"github.com/koiraladarwin/scanin/models"
 )
 
-func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.Activity, error) {
-	var activity models.Activity
+func (p *PostgresDB) CreateActivity(a *models.ActivityCreateRequest) (*models.ActivityWithScannedUser, error) {
+	var activity models.ActivityWithScannedUser
 	query := `
 		INSERT INTO activities (event_id, name, hall_name, start_time, end_time ,firebase_id) 
 		VALUES ($1, $2, $3, $4, $5 ,$6)
@@ -90,9 +90,9 @@ GROUP BY a.id;
 	return activities, nil
 }
 
-func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
+func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.ActivityWithScannedUser, error) {
 	scannedUsers := 0
-	a := &models.Activity{}
+	a := &models.ActivityWithScannedUser{}
 	query := `SELECT id, event_id, name, hall_name, start_time, end_time FROM activities WHERE id = $1 AND delete_at IS NULL`
 	err := p.sql.QueryRow(query, id).Scan(&a.ID, &a.EventID, &a.Name, &a.HallName, &a.StartTime, &a.EndTime)
 	if err != nil {
@@ -103,7 +103,7 @@ func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.Activity, error) {
 	return a, err
 }
 
-func (p *PostgresDB) UpdateActivity(a *models.Activity) error {
+func (p *PostgresDB) UpdateActivity(a *models.ActivityWithScannedUser) error {
 	query := `UPDATE activities SET event_id=$1, name=$2, hall_name=$3, start_time=$4, end_time=$5 WHERE id=$6`
 	_, err := p.sql.Exec(query, a.EventID, a.Name, a.HallName, a.StartTime, a.EndTime, a.ID)
 	return err
@@ -114,8 +114,8 @@ func (p *PostgresDB) DeleteActivity(id uuid.UUID) error {
 	return err
 }
 
-func (p *PostgresDB) GetActivitiesByEvent(firebaseId string, eventID uuid.UUID) ([]models.Activity, error) {
-	activities := []models.Activity{}
+func (p *PostgresDB) GetActivitiesByEvent(firebaseId string, eventID uuid.UUID) ([]models.ActivityWithScannedUser, error) {
+	activities := []models.ActivityWithScannedUser{}
 
 	query := `
 SELECT
@@ -147,7 +147,7 @@ WHERE a.event_id = $1 AND a.delete_at IS NULL;
 	defer rows.Close()
 
 	for rows.Next() {
-		var a models.Activity
+		var a models.ActivityWithScannedUser
 		if err := rows.Scan(&a.ID, &a.EventID, &a.Name, &a.HallName, &a.StartTime, &a.EndTime, &a.NumberOfScanedUsers); err != nil {
 			return nil, err
 		}

@@ -63,6 +63,19 @@ type EventWithDetails struct {
 	CheckedInCount    int       `json:"checked_in_count"`
 }
 
+type EventwithSessions struct {
+	ID                uuid.UUID  `json:"id"`
+	EventCategoryID   uuid.UUID  `json:"event_category_id"`
+	EventCategoryName string     `json:"event_category_name"`
+	Name              string     `json:"name"`
+	EventOrganizer    string     `json:"event_organizer"`
+	Description       string     `json:"description"`
+	StartTime         time.Time  `json:"start_time"`
+	EndTime           time.Time  `json:"end_time"`
+	Location          string     `json:"location"`
+	Activity          []Activity `json:"session"`
+}
+
 type EventCreateRequest struct {
 	Name                string    `json:"name"`
 	EventCategoryID     uuid.UUID `json:"event_category_id"`
@@ -75,14 +88,14 @@ type EventCreateRequest struct {
 	NumberOfParticipant int       `json:"number_of_participant"`
 }
 type EventResponse struct {
-	ID                  uuid.UUID `json:"id"`
-	EventCategoryID     uuid.UUID `json:"event_category_id"`
-	Name                string    `json:"name"`
-	EventOrganizer      string    `json:"event_organizer"`
-	Description         string    `json:"description"`
-	StartTime           time.Time `json:"start_time"`
-	EndTime             time.Time `json:"end_time"`
-	Location            string    `json:"location"`
+	ID              uuid.UUID `json:"id"`
+	EventCategoryID uuid.UUID `json:"event_category_id"`
+	Name            string    `json:"name"`
+	EventOrganizer  string    `json:"event_organizer"`
+	Description     string    `json:"description"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	Location        string    `json:"location"`
 }
 
 type EventModifyRequest struct {
@@ -93,6 +106,6 @@ type EventModifyRequest struct {
 }
 
 type EventInfo struct {
-	Event      Event      `json:"event"`
-	Activities []Activity `json:"activities"`
+	Event      Event                     `json:"event"`
+	Activities []ActivityWithScannedUser `json:"activities"`
 }

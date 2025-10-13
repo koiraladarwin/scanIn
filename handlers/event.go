@@ -82,6 +82,23 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(c)
 }
 
+func(h *Handler) GetEventsWithSesion(w http.ResponseWriter, r *http.Request){
+  firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+  if !ok {
+    log.Println("Unauthorized: no user in context")
+    http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+    return
+  }
+  events, err := h.DB.GetEventsWithSessions(firebaseUser.UID)
+  if err != nil {
+    log.Println("Failed to fetch events:", err)
+    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
+    return
+  }
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(events)
+}
+
 func (h *Handler) ModifyEvent(w http.ResponseWriter, r *http.Request) {
 	var c models.EventModifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {

@@ -1,8 +1,10 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/koiraladarwin/scanin/models"
@@ -170,6 +172,116 @@ func (p *PostgresDB) CreateEvent(e *models.EventCreateRequest) (models.Event, er
 
 	return createdEvent, nil
 }
+
+func (p *PostgresDB) GetEventsWithSessions(firebaseId string) ([]models.EventwithSessions, error) {
+	query := `
+	SELECT
+		e.id AS event_id,
+		e.event_category_id,
+		ec.tag AS event_category_name,
+		e.name AS event_name,
+		e.event_organizer,
+		e.description,
+		e.start_time,
+		e.end_time,
+		e.location,
+		a.id AS activity_id,
+		a.name AS activity_name,
+		a.hall_name,
+		a.start_time AS activity_start,
+		a.end_time AS activity_end,
+		a.firebase_id AS activity_firebase_id
+	FROM events e
+	LEFT JOIN event_category ec ON e.event_category_id = ec.id
+	LEFT JOIN activities a ON a.event_id = e.id AND a.deleted_at IS NULL
+	WHERE e.deleted_at IS NULL AND e.firebase_id = $1
+	ORDER BY e.start_time DESC;
+	`
+
+	rows, err := p.sql.Query(query, firebaseId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	eventMap := make(map[string]*models.EventwithSessions)
+
+	for rows.Next() {
+		var (
+			eventID             uuid.UUID
+			eventCategoryID     uuid.UUID
+			eventCategoryName   string
+			eventName           string
+			eventOrganizer      string
+			description         string
+			startTime           time.Time
+			endTime             time.Time
+			location            string
+			activityID          sql.NullString
+			activityName        sql.NullString
+			hallName            sql.NullString
+			activityStart       sql.NullTime
+			activityEnd         sql.NullTime
+			activityFirebaseID  sql.NullString
+		)
+
+		err := rows.Scan(
+			&eventID,
+			&eventCategoryID,
+			&eventCategoryName,
+			&eventName,
+			&eventOrganizer,
+			&description,
+			&startTime,
+			&endTime,
+			&location,
+			&activityID,
+			&activityName,
+			&hallName,
+			&activityStart,
+			&activityEnd,
+			&activityFirebaseID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, exists := eventMap[eventID.String()]; !exists {
+			eventMap[eventID.String()] = &models.EventwithSessions{
+				ID:                eventID,
+				EventCategoryID:   eventCategoryID,
+				EventCategoryName: eventCategoryName,
+				Name:              eventName,
+				EventOrganizer:    eventOrganizer,
+				Description:       description,
+				StartTime:         startTime,
+				EndTime:           endTime,
+				Location:          location,
+				Activity:          []models.Activity{},
+			}
+		}
+
+		if activityID.Valid {
+			eventMap[eventID.String()].Activity = append(eventMap[eventID.String()].Activity, models.Activity{
+				ID:         uuid.MustParse(activityID.String),
+				EventID:    eventID,
+				FirebaseID: activityFirebaseID.String,
+				Name:       activityName.String,
+				HallName:   hallName.String,
+				StartTime:  activityStart.Time,
+				EndTime:    activityEnd.Time,
+			})
+		}
+	}
+
+	var results []models.EventwithSessions
+	for _, evt := range eventMap {
+		results = append(results, *evt)
+	}
+
+	return results, nil
+}
+
 func (p *PostgresDB) GetEventsByFirebaseUser(firebaseId string) ([]models.Event, error) {
 	query := `
 SELECT 

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Activity struct {
+type ActivityWithScannedUser struct {
 	ID                  uuid.UUID `json:"id"`
 	EventID             uuid.UUID `json:"event_id"`
 	FirebaseID          string    `json:"firebase_id"`
@@ -15,6 +15,17 @@ type Activity struct {
 	EndTime             time.Time `json:"end_time"`
 	NumberOfScanedUsers int       `json:"number_of_scaned_users"`
 }
+
+type Activity struct {
+	ID                  uuid.UUID `json:"id"`
+	EventID             uuid.UUID `json:"event_id"`
+	FirebaseID          string    `json:"firebase_id"`
+	Name                string    `json:"name"`
+	HallName            string    `json:"hall_name"`
+	StartTime           time.Time `json:"start_time"`
+	EndTime             time.Time `json:"end_time"`
+}
+
 type ActivityDetails struct {
 	ID              uuid.UUID `json:"id"`
 	EventID         uuid.UUID `json:"event_id"`
