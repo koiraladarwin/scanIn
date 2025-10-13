@@ -77,12 +77,15 @@ func main() {
   Router.HandleFunc("/enrollattendeeactivity", handler.CreateAttendeeActivityEnroll).Methods(constants.Post)
 
   Router.HandleFunc("/ticket", handler.CreateTicket).Methods(constants.Post) 
+  Router.HandleFunc("/eventtickets", handler.GetTicketsForAllEvents).Methods(constants.Get) 
   Router.HandleFunc("/ticketcategory", handler.CreateTicketCategory).Methods(constants.Post) 
   Router.HandleFunc("/ticketcategories", handler.GetTicketCategories).Methods(constants.Get) 
   
+  Router.HandleFunc("/eventinvitees", handler.GetInviteeForAllEvents).Methods(constants.Get) 
   Router.HandleFunc("/invitee", handler.CreateInvitee).Methods(constants.Post)
   Router.HandleFunc("/inviteecategory", handler.CreateInviteeCategory).Methods(constants.Post)
   Router.HandleFunc("/inviteecategories", handler.GetInviteeCategories).Methods(constants.Get)
+
 
   Router.HandleFunc("/eventcategory", handler.CreateEventCategory).Methods(constants.Post)  
   Router.HandleFunc("/eventcategories", handler.GetEventCategories).Methods(constants.Get)

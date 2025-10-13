@@ -1,6 +1,8 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type TicketCategory struct {
 	ID          string  `json:"id"`
@@ -59,4 +61,29 @@ type InvitationResponse struct {
 	Name             string `json:"name"`
 	StartTime        string `json:"start_time"`
 	EndTime          string `json:"end_time"`
+}
+
+type EventsTicket struct {
+	Event         EventResponse   `json:"event"`
+	TicketDetails []TicketDetails `json:"ticket"`
+}
+
+type TicketDetails struct {
+	Id                  string     `json:"id"`
+	Ticket_category_id  string     `json:"ticket_category_id"`
+	Ticket_category_tag string     `json:"ticket_category_tag"`
+	Price               float64    `json:"price"`
+	Attendees           []Attendee `json:"attendees"`
+}
+
+type EventsInvitee struct {
+	Event          EventResponse    `json:"event"`
+	InviteeDetails []InviteeDetails `json:"invitation"`
+}
+
+type InviteeDetails struct {
+	Id                  string     `json:"id"`
+	Ticket_category_id  string     `json:"invitee_category_id"`
+	Ticket_category_tag string     `json:"invitee_category_tag"`
+	Attendees           []Attendee `json:"attendees"`
 }

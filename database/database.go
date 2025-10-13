@@ -48,6 +48,8 @@ type Database interface {
 	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
 	CreateAttendeeActivityEnroll(a models.AttendeeActivity) (models.AttendeeActivity, error)
 
+	GetTicketsForAllEvents(firebaseId string) ([]models.EventsTicket, error)
+	GetInviteeForAllEvents(firebaseId string) ([]models.EventsInvitee, error)
 	CreateTicket(a models.TicketRequest) (models.Ticket, error)
 	CreateTicketCategory(a models.TicketCategory) (models.TicketCategory, error)
 	GetTicketCategories(firebaseId string, ticket_type string) ([]models.TicketCategory, error)
