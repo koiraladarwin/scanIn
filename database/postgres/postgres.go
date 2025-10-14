@@ -138,6 +138,7 @@ func (p *PostgresDB) createTables() error {
       firebase_id TEXT NOT NULL,
       attendee_id UUID NOT NULL REFERENCES attendee(id) ON DELETE CASCADE,
       activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE, 
+      UNIQUE (attendee_id, activity_id),
 			deleted_at TIMESTAMPTZ
 		);`,
 

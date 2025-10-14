@@ -92,6 +92,7 @@ func main() {
 	Router.HandleFunc("/event", handler.GetEvent).Methods(constants.Get)
 	Router.HandleFunc("/eventswithdetails", handler.GetEventsWithDetails).Methods(constants.Get)
 	Router.HandleFunc("/eventswithsessions", handler.GetEventsWithSesion).Methods(constants.Get)
+	Router.HandleFunc("/eventswithsessionsandtickets", handler.GetEventsWithSesionsAndTickets).Methods(constants.Get)
 	Router.HandleFunc("/modifyevent", handler.ModifyEvent).Methods(constants.Put)
 	Router.HandleFunc("/eventinfo", handler.GetEventInfo).Methods(constants.Get)
 	Router.HandleFunc("/addeventwithcode/{code}", handler.AddEventWithEventCode).Methods(constants.Post)

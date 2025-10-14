@@ -93,7 +93,7 @@ GROUP BY a.id;
 func (p *PostgresDB) GetActivity(id uuid.UUID) (*models.ActivityWithScannedUser, error) {
 	scannedUsers := 0
 	a := &models.ActivityWithScannedUser{}
-	query := `SELECT id, event_id, name, hall_name, start_time, end_time FROM activities WHERE id = $1 AND delete_at IS NULL`
+	query := `SELECT id, event_id, name, hall_name, start_time, end_time FROM activities WHERE id = $1 AND deleted_at IS NULL`
 	err := p.sql.QueryRow(query, id).Scan(&a.ID, &a.EventID, &a.Name, &a.HallName, &a.StartTime, &a.EndTime)
 	if err != nil {
 		return nil, err

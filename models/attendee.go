@@ -10,13 +10,20 @@ type Attendee struct {
 }
 
 type AttendeeRequest struct {
-	UserID   uuid.UUID `json:"attendee_id"`
-	TicketID uuid.UUID `json:"ticket_or_invitee_id"`
+	UserID     uuid.UUID `json:"attendee_id"`
+	TicketID   uuid.UUID `json:"ticket_or_invitee_id"`
+	FirebaseID string    `json:"firebase_id"`
 }
 
 type AttendeeActivity struct {
 	ID         string    `json:"id"`
-	AttendeeID uuid.UUID `json:"attendee_id"`
-	ActivityID uuid.UUID `json:"activity_id"`
+	AttendeeID uuid.UUID `json:"attendee_enroll_event_id"`
+	ActivityID uuid.UUID `json:"session_id"`
 	DeletedAt  *string   `json:"deleted_at"`
+}
+
+type AttendeeActivityRequest struct {
+	AttendeeID uuid.UUID `json:"attendee_enroll_event_id"`
+	ActivityID uuid.UUID `json:"session_id"`
+	FirebaseID string    `json:"firebase_id"`
 }

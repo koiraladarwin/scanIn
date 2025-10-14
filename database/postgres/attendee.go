@@ -1,6 +1,9 @@
 package postgres
 
-import "github.com/koiraladarwin/scanin/models"
+import (
+	"github.com/google/uuid"
+	"github.com/koiraladarwin/scanin/models"
+)
 
 func (p *PostgresDB) CreateAttendee(a models.AttendeeRequest) (models.Attendee, error) {
 
@@ -14,14 +17,41 @@ func (p *PostgresDB) CreateAttendee(a models.AttendeeRequest) (models.Attendee, 
 	return attendee, nil
 }
 
-func (p *PostgresDB) CreateAttendeeActivityEnroll(a models.AttendeeActivity) (models.AttendeeActivity, error) {
+func (p *PostgresDB) CreateAttendeeActivityEnroll(a models.AttendeeActivityRequest) (models.AttendeeActivity, error) {
 
-  query := `INSERT INTO attendee_activity ( attendee_id, activity_id, ) VALUES ($1, $2) RETURNING id, attendee_id, activity_id;`
-  var attendeeActivityLog models.AttendeeActivity
+	query := `INSERT INTO attendee_activity ( attendee_id, activity_id ,firebase_id) VALUES ($1, $2, $3) RETURNING id, attendee_id, activity_id;`
+	var attendeeActivityLog models.AttendeeActivity
 
-  err := p.sql.QueryRow(query, a.AttendeeID, a.ActivityID).Scan(&attendeeActivityLog.ID, &attendeeActivityLog.AttendeeID)
-  if err != nil {
-    return models.AttendeeActivity{}, err
-  }
-  return attendeeActivityLog, nil
+	err := p.sql.QueryRow(query, a.AttendeeID, a.ActivityID, a.FirebaseID).Scan(&attendeeActivityLog.ID, &attendeeActivityLog.AttendeeID, &attendeeActivityLog.ActivityID)
+	if err != nil {
+		return models.AttendeeActivity{}, err
+	}
+	return attendeeActivityLog, nil
+}
+
+func (p *PostgresDB) GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, error) {
+	query := `
+  SELECT e.id, e.firebase_id, e.event_category_id, e.name, e.event_organizer, e.description, e.start_time, e.end_time, e.location 
+   FROM events e
+  JOIN  ticket t ON t.event_id = e.id
+  JOIN attendee a ON a.ticket_id = t.id
+  WHERE a.id = $1 AND a.deleted_at IS NULL;
+  `
+
+	var event models.Event
+	err := p.sql.QueryRow(query, attendeeID).Scan(
+		&event.ID,
+		&event.FirebaseID,
+		&event.EventCategoryID,
+		&event.Name,
+		&event.EventOrganizer,
+		&event.Description,
+		&event.StartTime,
+		&event.EndTime,
+		&event.Location,
+	)
+	if err != nil {
+		return models.Event{}, err
+	}
+	return event, nil
 }

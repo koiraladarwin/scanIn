@@ -47,10 +47,12 @@ type Database interface {
 	GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInRespose, error)
 
 	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
-	CreateAttendeeActivityEnroll(a models.AttendeeActivity) (models.AttendeeActivity, error)
+	CreateAttendeeActivityEnroll(a models.AttendeeActivityRequest) (models.AttendeeActivity, error)
+	GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, error)
 
 	GetTicketsForAllEvents(firebaseId string) ([]models.EventsTicket, error)
 	GetInviteeForAllEvents(firebaseId string) ([]models.EventsInvitee, error)
+	GetEventsWithSessionsAndTickets(firebaseId string) ([]models.EventwithSessionsAndTickets, error)
 	CreateTicket(a models.TicketRequest) (models.Ticket, error)
 	CreateTicketCategory(a models.TicketCategory) (models.TicketCategory, error)
 	GetTicketCategories(firebaseId string, ticket_type string) ([]models.TicketCategory, error)

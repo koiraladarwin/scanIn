@@ -75,6 +75,19 @@ type EventwithSessions struct {
 	Location          string     `json:"location"`
 	Activity          []Activity `json:"session"`
 }
+type EventwithSessionsAndTickets struct {
+	ID                uuid.UUID  `json:"id"`
+	EventCategoryID   uuid.UUID  `json:"event_category_id"`
+	EventCategoryName string     `json:"event_category_name"`
+	Name              string     `json:"name"`
+	EventOrganizer    string     `json:"event_organizer"`
+	Description       string     `json:"description"`
+	StartTime         time.Time  `json:"start_time"`
+	EndTime           time.Time  `json:"end_time"`
+	Location          string     `json:"location"`
+	Activity          []Activity `json:"session"`
+	Ticket            []Ticket   `json:"ticket"`
+}
 
 type EventCreateRequest struct {
 	Name                string    `json:"name"`

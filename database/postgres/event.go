@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -333,6 +335,130 @@ FROM events
 	return events, nil
 }
 
+
+func (p *PostgresDB) GetEventsWithSessionsAndTickets(firebaseId string) ([]models.EventwithSessionsAndTickets, error) {
+	query := `
+	SELECT
+		e.id AS event_id,
+		e.event_category_id,
+		ec.tag AS event_category_name,
+		e.name AS event_name,
+		e.event_organizer,
+		e.description,
+		e.start_time,
+		e.end_time,
+		e.location,
+
+		COALESCE(
+			ARRAY_AGG(
+				DISTINCT a.id || '|' || a.name || '|' || a.hall_name || '|' ||
+				COALESCE(a.start_time::text, '') || '|' ||
+				COALESCE(a.end_time::text, '') || '|' ||
+				COALESCE(a.firebase_id, '')
+			) FILTER (WHERE a.id IS NOT NULL),
+			'{}'
+		) AS activities,
+
+		COALESCE(
+			ARRAY_AGG(
+				DISTINCT t.id || '|' || t.name || '|' ||
+				COALESCE(t.price::text, '0') || '|' ||
+				COALESCE(t.paid::text, 'false') || '|' ||
+				COALESCE(t.start_time::text, '') || '|' ||
+				COALESCE(t.end_time::text, '') || '|' ||
+				COALESCE(t.firebase_id, '')
+			) FILTER (WHERE t.id IS NOT NULL),
+			'{}'
+		) AS tickets
+
+	FROM events e
+	LEFT JOIN event_category ec ON e.event_category_id = ec.id
+	LEFT JOIN activities a ON a.event_id = e.id AND a.deleted_at IS NULL
+	LEFT JOIN ticket t ON t.event_id = e.id AND t.deleted_at IS NULL
+	WHERE e.deleted_at IS NULL AND e.firebase_id = $1
+	GROUP BY
+		e.id, e.event_category_id, ec.tag, e.name,
+		e.event_organizer, e.description, e.start_time,
+		e.end_time, e.location
+	ORDER BY e.start_time DESC;
+	`
+
+	rows, err := p.sql.Query(query, firebaseId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.EventwithSessionsAndTickets
+
+	for rows.Next() {
+		var (
+			event models.EventwithSessionsAndTickets
+			activityArr pq.StringArray
+			ticketArr   pq.StringArray
+		)
+
+		err := rows.Scan(
+			&event.ID,
+			&event.EventCategoryID,
+			&event.EventCategoryName,
+			&event.Name,
+			&event.EventOrganizer,
+			&event.Description,
+			&event.StartTime,
+			&event.EndTime,
+			&event.Location,
+			&activityArr,
+			&ticketArr,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse activities
+		for _, s := range activityArr {
+			parts := strings.Split(s, "|")
+			if len(parts) >= 6 {
+				start, _ := time.Parse(time.RFC3339, parts[3])
+				end, _ := time.Parse(time.RFC3339, parts[4])
+				event.Activity = append(event.Activity, models.Activity{
+					ID:         uuid.MustParse(parts[0]),
+					EventID:    event.ID,
+					Name:       parts[1],
+					HallName:   parts[2],
+					StartTime:  start,
+					EndTime:    end,
+					FirebaseID: parts[5],
+				})
+			}
+		}
+
+		// Parse tickets
+		for _, s := range ticketArr {
+			parts := strings.Split(s, "|")
+			if len(parts) >= 7 {
+				start, _ := time.Parse(time.RFC3339, parts[4])
+				end, _ := time.Parse(time.RFC3339, parts[5])
+				price, _ := strconv.ParseFloat(parts[2], 64)
+				paid := parts[3] == "true"
+				event.Ticket = append(event.Ticket, models.Ticket{
+					ID:         parts[0],
+					Name:       parts[1],
+					EventID:    event.ID.String(),
+					Price:      price,
+					Paid:       paid,
+					StartTime:  start.String(),
+					EndTime:    end.String(),
+					FirebaseID: parts[6],
+				})
+			}
+		}
+
+		results = append(results, event)
+	}
+
+	return results, nil
+}
 func (p *PostgresDB) GetEventByFirebaseUser(firebaseId string, eventId uuid.UUID) (*models.Event, error) {
 	e := &models.Event{}
 

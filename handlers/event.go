@@ -74,7 +74,7 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	_, err := h.DB.CreateEvent(&c)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create Event")
-    log.Println("Failed to create Event:", err.Error())
+		log.Println("Failed to create Event:", err.Error())
 		return
 	}
 
@@ -82,21 +82,38 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(c)
 }
 
-func(h *Handler) GetEventsWithSesion(w http.ResponseWriter, r *http.Request){
-  firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
-  if !ok {
-    log.Println("Unauthorized: no user in context")
-    http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
-    return
-  }
-  events, err := h.DB.GetEventsWithSessions(firebaseUser.UID)
-  if err != nil {
-    log.Println("Failed to fetch events:", err)
-    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
-    return
-  }
-  w.Header().Set("Content-Type", "application/json")
-  json.NewEncoder(w).Encode(events)
+func (h *Handler) GetEventsWithSesion(w http.ResponseWriter, r *http.Request) {
+	firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		log.Println("Unauthorized: no user in context")
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+	events, err := h.DB.GetEventsWithSessions(firebaseUser.UID)
+	if err != nil {
+		log.Println("Failed to fetch events:", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(events)
+}
+
+func (h *Handler) GetEventsWithSesionsAndTickets(w http.ResponseWriter, r *http.Request) {
+	firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		log.Println("Unauthorized: no user in context")
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+	events, err := h.DB.GetEventsWithSessionsAndTickets(firebaseUser.UID)
+	if err != nil {
+		log.Println("Failed to fetch events:", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(events)
 }
 
 func (h *Handler) ModifyEvent(w http.ResponseWriter, r *http.Request) {
@@ -169,7 +186,7 @@ func (h *Handler) GetEventsWithDetails(w http.ResponseWriter, r *http.Request) {
 	if err == sql.ErrNoRows {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(events)
-    return
+		return
 	}
 
 	if err != nil {
@@ -197,19 +214,19 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
 		return
 	}
-  eventsResp := make([]models.EventResponse, len(events))
-  for i, event := range events {
-    eventsResp[i] = models.EventResponse{
-      ID: event.ID,
-      EventCategoryID: event.EventCategoryID,
-      Name: event.Name,
-      EventOrganizer: event.EventOrganizer,
-      Description: event.Description,
-      StartTime: event.StartTime,
-      EndTime: event.EndTime,
-      Location: event.Location,
-    }
-  }
+	eventsResp := make([]models.EventResponse, len(events))
+	for i, event := range events {
+		eventsResp[i] = models.EventResponse{
+			ID:              event.ID,
+			EventCategoryID: event.EventCategoryID,
+			Name:            event.Name,
+			EventOrganizer:  event.EventOrganizer,
+			Description:     event.Description,
+			StartTime:       event.StartTime,
+			EndTime:         event.EndTime,
+			Location:        event.Location,
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(eventsResp)
