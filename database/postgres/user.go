@@ -62,8 +62,8 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 	autoId := lastAutoID + 1
 
 	query := `
-		INSERT INTO users (auto_id, full_name, image_url, position, company, users_category_id,firebase_id, phone_number)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO users (auto_id, full_name, image_url, position, company, users_category_id,firebase_id, phone_number, gmail)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8 , $9)
 		RETURNING id
 	`
 	err = p.sql.QueryRow(
@@ -76,6 +76,7 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 		reqUser.UsersCategoryID,
 		reqUser.FirebaseID,
 		reqUser.PhoneNumber,
+    reqUser.Gmail,
 	).Scan(&user.ID)
 
 	if isUniqueViolationError(err) {
@@ -88,13 +89,14 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 	user.AutoId = autoId
 	user.UsersCategoryID = reqUser.UsersCategoryID
 	user.PhoneNumber = reqUser.PhoneNumber
+  user.Gmail = reqUser.Gmail
 
 	return &user, err
 }
 
 func (p *PostgresDB) GetUsers(firebaseid string) ([]models.User, error) {
 	var users []models.User
-	query := `SELECT id, full_name, auto_id, image_url, position, company ,users_category_id, phone_number FROM users WHERE firebase_id=$1 AND deleted_at IS NULL`
+	query := `SELECT id, full_name, auto_id, image_url, position, company ,users_category_id, phone_number,gmail FROM users WHERE firebase_id=$1 AND deleted_at IS NULL`
 	rows, err := p.sql.Query(query, firebaseid)
 	if err != nil {
 		fmt.Println("Error fetching users:", err)
@@ -103,7 +105,7 @@ func (p *PostgresDB) GetUsers(firebaseid string) ([]models.User, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var u models.User
-		if err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.UsersCategoryID, &u.PhoneNumber); err != nil {
+		if err := rows.Scan(&u.ID, &u.FullName, &u.AutoId, &u.Image_url, &u.Position, &u.Company, &u.UsersCategoryID, &u.PhoneNumber, &u.Gmail); err != nil {
 			fmt.Println("Error scanning user:", err)
 			return nil, err
 		}

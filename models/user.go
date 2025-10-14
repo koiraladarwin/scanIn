@@ -28,6 +28,7 @@ type User struct {
 	FirebaseID      string    `json:"firebase_id"`
 	FullName        string    `json:"full_name"`
 	Company         string    `json:"company"`
+	Gmail           string `json:"gmail"`
 	Position        string    `json:"position"`
 	Image_url       string    `json:"image_url"`
 	AutoId          int       `json:"auto_id"`
@@ -38,6 +39,7 @@ type User struct {
 type UserModifyRequest struct {
 	ID              uuid.UUID `json:"id"`
 	FullName        string    `json:"full_name"`
+	Gmail           string `json:"gmail"`
 	Company         string    `json:"company"`
 	Position        string    `json:"position"`
 	Image_url       string    `json:"image_url"`
@@ -50,6 +52,7 @@ type UserRequest struct {
 	FirebaseID      string `json:"firebase_id"`
 	FullName        string `json:"full_name"`
 	Company         string `json:"company"`
+	Gmail           string `json:"gmail"`
 	Position        string `json:"position"`
 	Image_url       string `json:"image_url"`
 	PhoneNumber     string `json:"phone_number"`

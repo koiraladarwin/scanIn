@@ -77,6 +77,7 @@ func (p *PostgresDB) createTables() error {
 			auto_id INT NOT NULL,
       firebase_id TEXT NOT NULL,
       phone_number TEXT NOT NULL,
+      gmail TEXT NOT NULL UNIQUE,
 			full_name TEXT NOT NULL,
 			image_url TEXT NOT NULL,
 			company TEXT NOT NULL,
