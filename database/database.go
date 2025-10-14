@@ -47,6 +47,7 @@ type Database interface {
 	GetAllCheckInOfUser(userID uuid.UUID) ([]models.CheckInRespose, error)
 
 	CreateAttendee(a models.AttendeeRequest) (models.Attendee, error)
+	GetAttendeeFromUserIdandEventId(userID, eventID uuid.UUID) (models.Attendee, error)
 	CreateAttendeeActivityEnroll(a models.AttendeeActivityRequest) (models.AttendeeActivity, error)
 	GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, error)
 
@@ -54,6 +55,7 @@ type Database interface {
 	GetInviteeForAllEvents(firebaseId string) ([]models.EventsInvitee, error)
 	GetEventsWithSessionsAndTickets(firebaseId string) ([]models.EventwithSessionsAndTickets, error)
 	CreateTicket(a models.TicketRequest) (models.Ticket, error)
+	GetTicketById(firebaseId string, id uuid.UUID) (models.Ticket, error)
 	CreateTicketCategory(a models.TicketCategory) (models.TicketCategory, error)
 	GetTicketCategories(firebaseId string, ticket_type string) ([]models.TicketCategory, error)
 	GetTicketCategory(firebaseId string, id uuid.UUID) (models.TicketCategory, error)

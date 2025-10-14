@@ -177,9 +177,9 @@ func (p *PostgresDB) GetTicketsForAllEvents(firebaseId string) ([]models.EventsT
 
 			if attendeeID.Valid {
 				att := models.Attendee{
-					ID:        attendeeID.String,
-					UserID:    attendeeUserID.UUID,
-					TicketID:  attendeeTicketID.UUID,
+					ID:       attendeeID.String,
+					UserID:   attendeeUserID.UUID,
+					TicketID: attendeeTicketID.UUID,
 				}
 				if attendeeDeletedAt.Valid {
 					att.DeletedAt = &attendeeDeletedAt.String
@@ -311,9 +311,9 @@ func (p *PostgresDB) GetInviteeForAllEvents(firebaseId string) ([]models.EventsI
 
 			if attendeeID.Valid {
 				att := models.Attendee{
-					ID:        attendeeID.String,
-					UserID:    attendeeUserID.UUID,
-					TicketID:  attendeeTicketID.UUID,
+					ID:       attendeeID.String,
+					UserID:   attendeeUserID.UUID,
+					TicketID: attendeeTicketID.UUID,
 				}
 				if attendeeDeletedAt.Valid {
 					att.DeletedAt = &attendeeDeletedAt.String
@@ -333,7 +333,7 @@ func (p *PostgresDB) GetInviteeForAllEvents(firebaseId string) ([]models.EventsI
 			if t != nil {
 				newEvent.InviteeDetails = []models.InviteeDetails{*t}
 			} else {
-				newEvent.InviteeDetails  = []models.InviteeDetails{}
+				newEvent.InviteeDetails = []models.InviteeDetails{}
 			}
 			eventMap[eventID.String()] = newEvent
 		}
@@ -350,4 +350,12 @@ func (p *PostgresDB) GetInviteeForAllEvents(firebaseId string) ([]models.EventsI
 
 	return results, nil
 }
-
+func (p *PostgresDB) GetTicketById(firebaseId string, id uuid.UUID) (models.Ticket, error) {
+	query := `SELECT id, event_id, ticket_category_id, price, name, paid ,start_time, end_time FROM ticket WHERE firebase_id = $1 AND deleted_at IS NULL AND id = $2;`
+	var t models.Ticket
+	err := p.sql.QueryRow(query, firebaseId, id).Scan(&t.ID, &t.EventID, &t.TicketCategoryID, &t.Price, &t.Name, &t.Paid, &t.StartTime, &t.EndTime)
+	if err != nil {
+		return models.Ticket{}, err
+	}
+	return t, nil
+}

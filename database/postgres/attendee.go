@@ -55,3 +55,15 @@ func (p *PostgresDB) GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, e
 	}
 	return event, nil
 }
+
+func (p *PostgresDB) GetAttendeeFromUserIdandEventId(userID, eventID uuid.UUID) (models.Attendee, error) {
+	query := `SELECT a.id, a.user_id, a.ticket_id, a.deleted_at FROM attendee a
+  JOIN ticket t ON a.ticket_id = t.id
+  WHERE a.user_id = $1 AND t.event_id = $2 AND a.deleted_at IS NULL;`
+  var attendee models.Attendee
+  err := p.sql.QueryRow(query, userID, eventID).Scan(&attendee.ID, &attendee.UserID, &attendee.TicketID, &attendee.DeletedAt)
+  if err != nil {
+    return models.Attendee{}, err
+  }
+  return attendee, nil
+}

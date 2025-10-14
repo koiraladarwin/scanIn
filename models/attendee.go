@@ -27,3 +27,11 @@ type AttendeeActivityRequest struct {
 	ActivityID uuid.UUID `json:"session_id"`
 	FirebaseID string    `json:"firebase_id"`
 }
+
+type AttendeeEnroll struct {
+	UserID     uuid.UUID `json:"attendee_id"`
+	EventID    uuid.UUID `json:"event_id"`
+	ActivityID uuid.UUID `json:"session_id"`
+	TicketID   uuid.UUID `json:"ticket_or_invitee_id"`
+	FirebaseID string    `json:"firebase_id"`
+}

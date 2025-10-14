@@ -59,5 +59,5 @@ type StaffActivities struct {
 type StaffEnrollRequest struct {
 	StaffID    string `json:"staff_id"`
 	EventID    string `json:"event_id"`
-	ActivityID string `json:"activity_id"`
+	ActivityID string `json:"session_id"`
 }

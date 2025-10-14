@@ -205,15 +205,26 @@ func (h *Handler) CreateStaffEnrollment(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	}
+  activity ,err := h.DB.GetActivity(uuid.MustParse(se.ActivityID))
+  if err != nil {
+    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activity")
+    return
+  }
+
+  if activity.EventID != eventUUID {
+    utils.RespondWithError(w, http.StatusBadRequest, "Activity does not belong to the event")
+    return
+  }
 
 	staffEnrollActivity := models.StaffActivities{
 		FirebaseID:    fireBaseUser.UID,
 		StaffEnrollId: staffEnroll.ID,
 		ActivityID:    se.ActivityID,
 	}
-
+  
 	_, err = h.DB.CreateStaffActivityAssign(&staffEnrollActivity)
 	if err != nil {
+    log.Println("Error creating staff activity assignment:", err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to assign activity to staff")
 		return
 	}
