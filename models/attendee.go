@@ -35,3 +35,13 @@ type AttendeeEnroll struct {
 	TicketID   uuid.UUID `json:"ticket_or_invitee_id"`
 	FirebaseID string    `json:"firebase_id"`
 }
+
+type EnrolledAttendee struct {
+	AutoID               int    `json:"auto_id"`
+	AttendeeCategoryName string `json:"attendee_category_name"`
+	AttendeeName         string `json:"attendee_name"`
+	AttendeeImage        string `json:"attendee_image"`
+	EventName            string `json:"event_name"`
+	SessionName          string `json:"session_name"`
+	TicketName           string `json:"ticket_name"`
+}

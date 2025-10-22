@@ -76,7 +76,7 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 		reqUser.UsersCategoryID,
 		reqUser.FirebaseID,
 		reqUser.PhoneNumber,
-    reqUser.Gmail,
+		reqUser.Gmail,
 	).Scan(&user.ID)
 
 	if isUniqueViolationError(err) {
@@ -89,7 +89,7 @@ func (p *PostgresDB) CreateUser(reqUser *models.UserRequest) (*models.User, erro
 	user.AutoId = autoId
 	user.UsersCategoryID = reqUser.UsersCategoryID
 	user.PhoneNumber = reqUser.PhoneNumber
-  user.Gmail = reqUser.Gmail
+	user.Gmail = reqUser.Gmail
 
 	return &user, err
 }

@@ -29,6 +29,58 @@ func (p *PostgresDB) CreateAttendeeActivityEnroll(a models.AttendeeActivityReque
 	return attendeeActivityLog, nil
 }
 
+func (p *PostgresDB) GetEnrolledAttendee(firebaseID string) ([]models.EnrolledAttendee, error) {
+	query := `
+	
+SELECT 
+	u.auto_id AS auto_id,
+	uc.tag AS attendee_category_name,
+	u.full_name AS attendee_name,
+	u.image_url AS attendee_image,
+	e.name AS event_name,
+	a.name AS session_name,
+	t.name AS ticket_name
+FROM attendee_activity aa
+JOIN attendee at ON aa.attendee_id = at.id
+JOIN users u ON u.id = at.user_id
+LEFT JOIN users_category uc ON uc.id = u.users_category_id
+LEFT JOIN ticket t ON t.id = at.ticket_id
+LEFT JOIN activities a ON a.id = aa.activity_id
+LEFT JOIN events e ON e.id = a.event_id;
+	`
+
+	rows, err := p.sql.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var attendees []models.EnrolledAttendee
+
+	for rows.Next() {
+		var attendee models.EnrolledAttendee
+		err := rows.Scan(
+			&attendee.AutoID,
+			&attendee.AttendeeCategoryName,
+			&attendee.AttendeeName,
+			&attendee.AttendeeImage,
+			&attendee.EventName,
+			&attendee.SessionName,
+			&attendee.TicketName,
+		)
+		if err != nil {
+			return nil, err
+		}
+		attendees = append(attendees, attendee)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return attendees, nil
+}
+
 func (p *PostgresDB) GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, error) {
 	query := `
   SELECT e.id, e.firebase_id, e.event_category_id, e.name, e.event_organizer, e.description, e.start_time, e.end_time, e.location 
@@ -56,14 +108,21 @@ func (p *PostgresDB) GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, e
 	return event, nil
 }
 
-func (p *PostgresDB) GetAttendeeFromUserIdandEventId(userID, eventID uuid.UUID) (models.Attendee, error) {
-	query := `SELECT a.id, a.user_id, a.ticket_id, a.deleted_at FROM attendee a
-  JOIN ticket t ON a.ticket_id = t.id
-  WHERE a.user_id = $1 AND t.event_id = $2 AND a.deleted_at IS NULL;`
-  var attendee models.Attendee
-  err := p.sql.QueryRow(query, userID, eventID).Scan(&attendee.ID, &attendee.UserID, &attendee.TicketID, &attendee.DeletedAt)
-  if err != nil {
-    return models.Attendee{}, err
-  }
-  return attendee, nil
+func (p *PostgresDB) 	GetAttendeeFromUserIdandTicketId(userID, ticketID uuid.UUID) (models.Attendee, error) {
+	query := `SELECT id, user_id, ticket_id, deleted_at
+              FROM attendee
+              WHERE user_id = $1 AND ticket_id = $2 AND deleted_at IS NULL;`
+
+	var attendee models.Attendee
+	err := p.sql.QueryRow(query, userID, ticketID).Scan(
+		&attendee.ID,
+		&attendee.UserID,
+		&attendee.TicketID,
+		&attendee.DeletedAt,
+	)
+	if err != nil {
+		return models.Attendee{}, err
+	}
+
+	return attendee, nil
 }
