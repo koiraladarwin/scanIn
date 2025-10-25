@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"log"
+
 	"github.com/google/uuid"
 	db "github.com/koiraladarwin/scanin/database"
 	"github.com/koiraladarwin/scanin/models"
@@ -49,13 +51,19 @@ func (p *PostgresDB) GetStaffCategories(firebaseId string) ([]models.StaffCatego
 }
 
 func (p *PostgresDB) CreateStaff(staffRequest *models.Staff) (*models.Staff, error) {
+	staff_count_query := `SELECT COUNT(*) FROM staff WHERE firebase_id=$1 AND deleted_at IS NULL`
+	err := p.sql.QueryRow(staff_count_query, staffRequest.FirebaseID).Scan(&staffRequest.AutoID)
+	if err != nil {
+		return nil, err
+	}
+	staffRequest.AutoID += 1
 	var staff models.Staff
 	query := `
-  INSERT INTO staff (firebase_id, staff_gmail, name, image_url, phone, staff_category_id, company, position)
-  VALUES ($1, $2, $3, $4, $5, $6 ,$7, $8)
+  INSERT INTO staff (firebase_id, staff_gmail, name, image_url, phone, staff_category_id, company, position, auto_id)
+  VALUES ($1, $2, $3, $4, $5, $6 ,$7, $8, $9)
   RETURNING id
   `
-	err := p.sql.QueryRow(
+	err = p.sql.QueryRow(
 		query,
 		staffRequest.FirebaseID,
 		staffRequest.StaffGmail,
@@ -65,6 +73,7 @@ func (p *PostgresDB) CreateStaff(staffRequest *models.Staff) (*models.Staff, err
 		staffRequest.StaffCategoryID,
 		staffRequest.Company,
 		staffRequest.Position,
+		staffRequest.AutoID,
 	).Scan(&staff.ID)
 	if isUniqueViolationError(err) {
 		return nil, db.ErrAlreadyExists
@@ -75,14 +84,14 @@ func (p *PostgresDB) CreateStaff(staffRequest *models.Staff) (*models.Staff, err
 	staff.ImageURL = staffRequest.ImageURL
 	staff.Phone = staffRequest.Phone
 	staff.StaffCategoryID = staffRequest.StaffCategoryID
-  staff.Company = staffRequest.Company
-  staff.Position = staffRequest.Position
+	staff.Company = staffRequest.Company
+	staff.Position = staffRequest.Position
 
 	return &staff, err
 }
 
 func (p *PostgresDB) GetStaffs(firebaseId string) ([]models.Staff, error) {
-	query := `SELECT id, firebase_id, staff_gmail, name, image_url, phone, staff_category_id ,company ,position FROM staff WHERE firebase_id=$1 AND deleted_at IS NULL`
+	query := `SELECT id, firebase_id, staff_gmail, name, image_url, phone, staff_category_id ,company ,position, auto_id FROM staff WHERE firebase_id=$1 AND deleted_at IS NULL`
 	rows, err := p.sql.Query(query, firebaseId)
 	if err != nil {
 		return nil, err
@@ -91,7 +100,7 @@ func (p *PostgresDB) GetStaffs(firebaseId string) ([]models.Staff, error) {
 	var staffs []models.Staff
 	for rows.Next() {
 		var s models.Staff
-		if err := rows.Scan(&s.ID, &s.FirebaseID, &s.StaffGmail, &s.Name, &s.ImageURL, &s.Phone, &s.StaffCategoryID, &s.Company, &s.Position); err != nil {
+		if err := rows.Scan(&s.ID, &s.FirebaseID, &s.StaffGmail, &s.Name, &s.ImageURL, &s.Phone, &s.StaffCategoryID, &s.Company, &s.Position, &s.AutoID); err != nil {
 			return nil, err
 		}
 		staffs = append(staffs, s)
@@ -124,11 +133,14 @@ func (p *PostgresDB) CreateStaffEventEnroll(staffEnrollRequest *models.StaffEnro
 	return &staffEnroll, err
 }
 
-func (p *PostgresDB) GetStaffEventEnroll(firebaseId string, eventId uuid.UUID) (models.StaffEnroll, error) {
-	query := `SELECT id, firebase_id, staff_id, event_id, active FROM staff_enroll WHERE firebase_id=$1 AND event_id=$2 AND deleted_at IS NULL`
+func (p *PostgresDB) GetStaffEventEnroll(firebaseId string, staffId uuid.UUID, eventId uuid.UUID) (models.StaffEnroll, error) {
+	query := `SELECT id, firebase_id, staff_id, event_id, active FROM staff_enroll WHERE firebase_id=$1 AND staff_id=$2 AND event_id=$3 AND deleted_at IS NULL`
 	var staffEnroll models.StaffEnroll
-	err := p.sql.QueryRow(query, firebaseId, eventId).Scan(&staffEnroll.ID, &staffEnroll.FirebaseID, &staffEnroll.StaffID, &staffEnroll.EventID, &staffEnroll.Active)
+	err := p.sql.QueryRow(query, firebaseId, staffId, eventId).Scan(&staffEnroll.ID, &staffEnroll.FirebaseID, &staffEnroll.StaffID, &staffEnroll.EventID, &staffEnroll.Active)
+  log.Println("staffId:", staffId)
+  log.Println("eventId:", eventId)
 	if err != nil {
+    log.Println("Error retrieving staff enrollment:", err)
 		return staffEnroll, err
 	}
 	return staffEnroll, nil
@@ -155,4 +167,54 @@ func (p *PostgresDB) CreateStaffActivityAssign(staffActivityRequest *models.Staf
 	staffActivity.ActivityID = staffActivityRequest.ActivityID
 
 	return &staffActivity, err
+}
+
+func (p *PostgresDB) GetEnrolledStaff(firebaseID string) ([]models.EnrolledStaff, error) {
+	query := `
+	
+SELECT 
+	u.auto_id AS auto_id,
+	uc.tag AS attendee_category_name,
+	u.name AS attendee_name,
+	u.image_url AS attendee_image,
+	e.name AS event_name,
+	a.name AS session_name
+FROM staff_activites aa
+JOIN staff_enroll at ON aa.staff_enroll_id = at.id
+JOIN staff u ON u.id = at.staff_id
+LEFT JOIN staff_category uc ON uc.id = u.staff_category_id
+LEFT JOIN activities a ON a.id = aa.activity_id
+LEFT JOIN events e ON e.id = a.event_id;
+	`
+
+	rows, err := p.sql.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var attendees []models.EnrolledStaff
+
+	for rows.Next() {
+		var attendee models.EnrolledStaff
+		err := rows.Scan(
+			&attendee.AutoID,
+			&attendee.StafCategoryName,
+			&attendee.StaffName,
+			&attendee.StaffImage,
+			&attendee.EventName,
+			&attendee.ActivityName,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+		attendees = append(attendees, attendee)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return attendees, nil
 }

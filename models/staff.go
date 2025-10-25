@@ -5,12 +5,13 @@ type Staff struct {
 	FirebaseID      string `json:"firebase_id"`
 	StaffGmail      string `json:"staff_gmail"`
 	Name            string `json:"name"`
+	AutoID          int `json:"auto_id"`
 	ImageURL        string `json:"image_url"`
 	Phone           string `json:"phone"`
 	StaffCategoryID string `json:"staff_category_id"`
 	DeletedAt       string `json:"deleted_at"`
-  Company         string `json:"company"`
-  Position        string `json:"position"`
+	Company         string `json:"company"`
+	Position        string `json:"position"`
 }
 
 type StaffResponse struct {
@@ -20,8 +21,8 @@ type StaffResponse struct {
 	ImageURL        string `json:"image_url"`
 	Phone           string `json:"phone"`
 	StaffCategoryID string `json:"staff_category_id"`
-  Company         string `json:"company"`
-  Position        string `json:"position"`
+	Company         string `json:"company"`
+	Position        string `json:"position"`
 }
 
 type StaffCategory struct {
@@ -46,6 +47,15 @@ type StaffEnroll struct {
 	EventID    string `json:"event_id"`
 	Active     bool   `json:"active"`
 	DeletedAt  string `json:"deleted_at"`
+}
+
+type EnrolledStaff struct {
+	AutoID           int    `json:"auto_id"`
+	StaffName        string `json:"staff_name"`
+	StaffImage       string `json:"staff_image"`
+	EventName        string `json:"event_name"`
+	ActivityName     string `json:"activity_name"`
+	StafCategoryName string `json:"entry"`
 }
 
 type StaffActivities struct {

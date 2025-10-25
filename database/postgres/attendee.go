@@ -39,7 +39,8 @@ SELECT
 	u.image_url AS attendee_image,
 	e.name AS event_name,
 	a.name AS session_name,
-	t.name AS ticket_name
+	t.name AS ticket_name,
+  t.price As ticket_price
 FROM attendee_activity aa
 JOIN attendee at ON aa.attendee_id = at.id
 JOIN users u ON u.id = at.user_id
@@ -67,7 +68,15 @@ LEFT JOIN events e ON e.id = a.event_id;
 			&attendee.EventName,
 			&attendee.SessionName,
 			&attendee.TicketName,
+			&attendee.Attendee_type,
 		)
+
+		if attendee.Attendee_type == "0" {
+			attendee.Attendee_type = "invitation"
+		} else {
+			attendee.Attendee_type = "ticket"
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -108,7 +117,7 @@ func (p *PostgresDB) GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, e
 	return event, nil
 }
 
-func (p *PostgresDB) 	GetAttendeeFromUserIdandTicketId(userID, ticketID uuid.UUID) (models.Attendee, error) {
+func (p *PostgresDB) GetAttendeeFromUserIdandTicketId(userID, ticketID uuid.UUID) (models.Attendee, error) {
 	query := `SELECT id, user_id, ticket_id, deleted_at
               FROM attendee
               WHERE user_id = $1 AND ticket_id = $2 AND deleted_at IS NULL;`

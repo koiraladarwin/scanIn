@@ -172,6 +172,7 @@ func (p *PostgresDB) createTables() error {
 		`CREATE TABLE IF NOT EXISTS staff (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       firebase_id TEXT NOT NULL,
+      auto_id INT NOT NULL,
       staff_gmail TEXT NOT NULL UNIQUE,
       name TEXT NOT NULL,
       image_url TEXT NOT NULL,

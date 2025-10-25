@@ -66,7 +66,8 @@ type Database interface {
 	CreateStaff(staffRequest *models.Staff) (*models.Staff, error)
 	GetStaffs(firebaseId string) ([]models.Staff, error)
 	CreateStaffEventEnroll(staffEnrollRequest *models.StaffEnroll) (*models.StaffEnroll, error)
-	GetStaffEventEnroll(firebaseId string, eventId uuid.UUID) (models.StaffEnroll, error)
+	GetStaffEventEnroll(firebaseId string,  staffId uuid.UUID,eventId uuid.UUID,) (models.StaffEnroll, error)
 	CreateStaffActivityAssign(staffActivityRequest *models.StaffActivities) (*models.StaffActivities, error)
+	GetEnrolledStaff(firebaseID string) ([]models.EnrolledStaff, error)
 	Close() error
 }

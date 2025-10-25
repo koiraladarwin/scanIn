@@ -114,6 +114,7 @@ func main() {
   Router.HandleFunc("/staff", handler.CreateStaff).Methods(constants.Post)
   Router.HandleFunc("/staff", handler.GetStaffs).Methods(constants.Get)
   Router.HandleFunc("/enrollstaff", handler.CreateStaffEnrollment).Methods(constants.Post)
+  Router.HandleFunc("/enrollstaff", handler.GetEnrolledStaff).Methods(constants.Get)
 
 	log.Printf("Server running on port %s", port)
 	err = http.ListenAndServe(":"+port, withCORS(Router))

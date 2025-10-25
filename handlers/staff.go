@@ -119,8 +119,8 @@ func (h *Handler) CreateStaff(w http.ResponseWriter, r *http.Request) {
 		ImageURL:        staff.ImageURL,
 		Phone:           staff.Phone,
 		StaffCategoryID: staff.StaffCategoryID,
-    Company:         staff.Company,
-    Position:        staff.Position,
+		Company:         staff.Company,
+		Position:        staff.Position,
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -178,14 +178,19 @@ func (h *Handler) CreateStaffEnrollment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	staffUUID, err := uuid.Parse(se.StaffID)
+	if err != nil {
+		log.Println("Error parsing event ID:", err)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid event ID format")
+		return
+	}
 	eventUUID, err := uuid.Parse(se.EventID)
 	if err != nil {
 		log.Println("Error parsing event ID:", err)
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid event ID format")
 		return
 	}
-
-	staffEnroll, err := h.DB.GetStaffEventEnroll(fireBaseUser.UID, eventUUID)
+	staffEnroll, err := h.DB.GetStaffEventEnroll(fireBaseUser.UID, staffUUID, eventUUID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			newStaffEnroll := models.StaffEnroll{
@@ -196,6 +201,8 @@ func (h *Handler) CreateStaffEnrollment(w http.ResponseWriter, r *http.Request) 
 			}
 			createdEnroll, err := h.DB.CreateStaffEventEnroll(&newStaffEnroll)
 			if err != nil {
+				log.Println("Error creating staff enrollment:", err.Error())
+				log.Println(newStaffEnroll)
 				utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create staff enrollment")
 				return
 			}
@@ -205,30 +212,46 @@ func (h *Handler) CreateStaffEnrollment(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	}
-  activity ,err := h.DB.GetActivity(uuid.MustParse(se.ActivityID))
-  if err != nil {
-    utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activity")
-    return
-  }
+	activity, err := h.DB.GetActivity(uuid.MustParse(se.ActivityID))
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch activity")
+		return
+	}
 
-  if activity.EventID != eventUUID {
-    utils.RespondWithError(w, http.StatusBadRequest, "Activity does not belong to the event")
-    return
-  }
+	if activity.EventID.String() != se.EventID {
+		utils.RespondWithError(w, http.StatusBadRequest, "Activity does not belong to the event")
+		return
+	}
 
 	staffEnrollActivity := models.StaffActivities{
 		FirebaseID:    fireBaseUser.UID,
 		StaffEnrollId: staffEnroll.ID,
 		ActivityID:    se.ActivityID,
 	}
-  
+
 	_, err = h.DB.CreateStaffActivityAssign(&staffEnrollActivity)
 	if err != nil {
-    log.Println("Error creating staff activity assignment:", err.Error())
+		log.Println("Error creating staff activity assignment:", err.Error())
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to assign activity to staff")
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *Handler) GetEnrolledStaff(w http.ResponseWriter, r *http.Request) {
+	fireBaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+		return
+	}
+	enrolledStaffs, err := h.DB.GetEnrolledStaff(fireBaseUser.UID)
+	if err != nil {
+		log.Println("Error fetching enrolled staffs:", err.Error())
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch enrolled staffs")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(enrolledStaffs)
 }
