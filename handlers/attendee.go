@@ -167,8 +167,6 @@ func (h *Handler) EnrollAttendee(w http.ResponseWriter, r *http.Request) {
             http.Error(w, "Attendee already enrolled in this activity", http.StatusConflict)
             return
         }
-
-        log.Println("Error creating attendee activity log:", err)
         http.Error(w, "Failed to create attendee activity log", http.StatusInternalServerError)
         return
     }
