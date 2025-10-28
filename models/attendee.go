@@ -54,6 +54,7 @@ type EnrolledAttendee struct {
 	AttendeeCategoryName string `json:"attendee_category_name"`
 	AttendeeName         string `json:"attendee_name"`
 	AttendeeImage        string `json:"attendee_image"`
+	EventId              string `json:"event_id"`
 	EventName            string `json:"event_name"`
 	SessionName          string `json:"session_name"`
 	TicketName           string `json:"entry"`

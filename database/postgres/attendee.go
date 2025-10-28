@@ -38,6 +38,7 @@ SELECT
 	uc.tag AS attendee_category_name,
 	u.full_name AS attendee_name,
 	u.image_url AS attendee_image,
+  e.id AS event_id,
 	e.name AS event_name,
 	a.name AS session_name,
 	t.name AS ticket_name,
@@ -48,7 +49,8 @@ JOIN users u ON u.id = at.user_id
 LEFT JOIN users_category uc ON uc.id = u.users_category_id
 LEFT JOIN ticket t ON t.id = at.ticket_id
 LEFT JOIN activities a ON a.id = aa.activity_id
-LEFT JOIN events e ON e.id = a.event_id;
+LEFT JOIN events e ON e.id = a.event_id
+ORDER BY u.id ,e.id;
 	`
 
 	rows, err := p.sql.Query(query)
@@ -67,6 +69,7 @@ LEFT JOIN events e ON e.id = a.event_id;
 			&attendee.AttendeeCategoryName,
 			&attendee.AttendeeName,
 			&attendee.AttendeeImage,
+      &attendee.EventId,
 			&attendee.EventName,
 			&attendee.SessionName,
 			&attendee.TicketName,
