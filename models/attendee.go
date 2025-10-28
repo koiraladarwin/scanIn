@@ -10,10 +10,10 @@ type Attendee struct {
 }
 
 type AttendeeWithDetails struct {
-	ID       string    `json:"id"`
-	UserID   uuid.UUID `json:"attendee_id"`
-	Position string    `json:"position"`
-  Company  string    `json:"company"`
+	ID        string    `json:"id"`
+	UserID    uuid.UUID `json:"attendee_id"`
+	Position  string    `json:"position"`
+	Company   string    `json:"company"`
 	TicketID  uuid.UUID `json:"ticket_id"`
 	DeletedAt *string   `json:"deleted_at"`
 	Name      string    `json:"name"`
@@ -49,6 +49,7 @@ type AttendeeEnroll struct {
 }
 
 type EnrolledAttendee struct {
+	Attendee_id          string `json:"attendee_id"`
 	AutoID               int    `json:"auto_id"`
 	AttendeeCategoryName string `json:"attendee_category_name"`
 	AttendeeName         string `json:"attendee_name"`

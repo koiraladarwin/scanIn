@@ -33,6 +33,7 @@ func (p *PostgresDB) GetEnrolledAttendee(firebaseID string) ([]models.EnrolledAt
 	query := `
 	
 SELECT 
+  u.id AS id,
 	u.auto_id AS auto_id,
 	uc.tag AS attendee_category_name,
 	u.full_name AS attendee_name,
@@ -61,6 +62,7 @@ LEFT JOIN events e ON e.id = a.event_id;
 	for rows.Next() {
 		var attendee models.EnrolledAttendee
 		err := rows.Scan(
+      &attendee.Attendee_id,
 			&attendee.AutoID,
 			&attendee.AttendeeCategoryName,
 			&attendee.AttendeeName,

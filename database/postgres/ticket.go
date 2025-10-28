@@ -196,8 +196,8 @@ query := `
 			json_agg(
 				jsonb_build_object(
 					'id', t.id,
-					'ticket_category_id', t.ticket_category_id,
-					'ticket_category_tag', tc.tag,
+					'invitee_category_id', t.ticket_category_id,
+					'invitee_category_tag', tc.tag,
 					'price', t.price,
 					'attendees', COALESCE((
 						SELECT json_agg(
@@ -226,7 +226,7 @@ query := `
 		ON e.id = t.event_id 
 		AND t.deleted_at IS NULL 
 		AND t.firebase_id = $1 
-		AND t.price > 0
+		AND t.price = 0
 	LEFT JOIN ticket_category tc 
 		ON t.ticket_category_id = tc.id
 	WHERE e.deleted_at IS NULL 
