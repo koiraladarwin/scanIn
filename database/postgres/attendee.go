@@ -140,3 +140,63 @@ func (p *PostgresDB) GetAttendeeFromUserIdandTicketId(userID, ticketID uuid.UUID
 
 	return attendee, nil
 }
+
+func (p *PostgresDB) GetAllTicketAttendee(firebaseID string,eventId string) ([]models.TicketAttendee, error){
+  query := `select 
+  a.id, a.user_id,
+  t.id,t.name,t.price,t.paid,
+  u.full_name, u.phone_number, u.image_url,u.auto_id,u.position,u.company
+  from attendee a
+  join ticket t on t.id = a.ticket_id
+  join users u on u.id = a.user_id
+  where t.event_id = $1 AND u.firebase_id =$2 AND t.price >0;`
+  rows, err := p.sql.Query(query,eventId,firebaseID)
+  if err != nil {
+    return nil, err
+  }
+  defer rows.Close()
+  var attendees []models.TicketAttendee
+  for rows.Next() {
+    var attendee models.TicketAttendee
+    err := rows.Scan(
+      &attendee.ID,
+      &attendee.UserID,
+      &attendee.TicketID,
+      &attendee.TicketName,
+      &attendee.Amount,
+      &attendee.Status,
+      &attendee.Name,
+      &attendee.Phonenumber,
+      &attendee.ImageURL,
+      &attendee.AutoID,
+      &attendee.Position,
+      &attendee.Company,
+    )
+    if err != nil {
+      return nil, err
+    }
+    attendees = append(attendees, attendee)
+  }
+  return attendees, nil
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

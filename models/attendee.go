@@ -9,6 +9,21 @@ type Attendee struct {
 	DeletedAt *string   `json:"deleted_at"`
 }
 
+type TicketAttendee struct {
+	ID          string    `json:"id"`
+	UserID      uuid.UUID `json:"attendee_id"`
+	AutoID      int       `json:"auto_id"`
+	Position    string    `json:"position"`
+	Company     string    `json:"company"`
+	TicketID    uuid.UUID `json:"ticket_id"`
+	TicketName  string `json:"ticket_name"`
+	Amount      int       `json:"amount"`
+	Status      string    `json:"status"`
+	Name        string    `json:"name"`
+	Phonenumber string    `json:"phone_number"`
+	ImageURL    string    `json:"image_url"`
+}
+
 type AttendeeWithDetails struct {
 	ID        string    `json:"id"`
 	UserID    uuid.UUID `json:"attendee_id"`

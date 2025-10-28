@@ -51,6 +51,7 @@ type Database interface {
 	CreateAttendeeActivityEnroll(a models.AttendeeActivityRequest) (models.AttendeeActivity, error)
 	GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, error)
 	GetEnrolledAttendee(firebaseID string) ([]models.EnrolledAttendee, error)
+	GetAllTicketAttendee(firebaseID string, eventId string) ([]models.TicketAttendee, error)
 
 	GetTicketsForAllEvents(firebaseId string) ([]models.EventsTicket, error)
 	GetInviteeForAllEvents(firebaseId string) ([]models.EventsInvitee, error)
@@ -66,7 +67,7 @@ type Database interface {
 	CreateStaff(staffRequest *models.Staff) (*models.Staff, error)
 	GetStaffs(firebaseId string) ([]models.Staff, error)
 	CreateStaffEventEnroll(staffEnrollRequest *models.StaffEnroll) (*models.StaffEnroll, error)
-	GetStaffEventEnroll(firebaseId string,  staffId uuid.UUID,eventId uuid.UUID,) (models.StaffEnroll, error)
+	GetStaffEventEnroll(firebaseId string, staffId uuid.UUID, eventId uuid.UUID) (models.StaffEnroll, error)
 	CreateStaffActivityAssign(staffActivityRequest *models.StaffActivities) (*models.StaffActivities, error)
 	GetEnrolledStaff(firebaseID string) ([]models.EnrolledStaff, error)
 	Close() error

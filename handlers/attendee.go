@@ -194,3 +194,27 @@ func(h *Handler) GetEnrolledAttendee(w http.ResponseWriter, r *http.Request){
   w.Header().Set("Content-Type", "application/json")
   json.NewEncoder(w).Encode(enrolledAttendees)
 }
+
+func(h *Handler) GetTicketAttendee(w http.ResponseWriter, r *http.Request){
+  firebaseUser, ok := firebaseauth.FbUserFromContext(r.Context())
+  if !ok {
+    http.Error(w, "Unauthorized: no user in context", http.StatusUnauthorized)
+    return
+  }
+  eventID := r.URL.Query().Get("event_id")
+
+  ticketAttendees,  err := h.DB.GetAllTicketAttendee(firebaseUser.UID, eventID)
+  if err != nil {
+    log.Println("Error fetching ticket attendees:", err)
+    http.Error(w, "Failed to fetch ticket attendees", http.StatusInternalServerError)
+    return
+  }
+
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(ticketAttendees)
+}
+
+
+
+
+
