@@ -69,11 +69,11 @@ type EventsTicket struct {
 }
 
 type TicketDetails struct {
-	Id                  string     `json:"id"`
-	Ticket_category_id  string     `json:"ticket_category_id"`
-	Ticket_category_tag string     `json:"ticket_category_tag"`
-	Price               float64    `json:"price"`
-	Attendees           []Attendee `json:"attendees"`
+	Id                  string                `json:"id"`
+	Ticket_category_id  string                `json:"ticket_category_id"`
+	Ticket_category_tag string                `json:"ticket_category_tag"`
+	Price               float64               `json:"price"`
+	Attendees           []AttendeeWithDetails `json:"attendees"`
 }
 
 type EventsInvitee struct {
@@ -85,5 +85,5 @@ type InviteeDetails struct {
 	Id                  string     `json:"id"`
 	Ticket_category_id  string     `json:"invitee_category_id"`
 	Ticket_category_tag string     `json:"invitee_category_tag"`
-	Attendees           []Attendee `json:"attendees"`
+	Attendees           []AttendeeWithDetails `json:"attendees"`
 }
