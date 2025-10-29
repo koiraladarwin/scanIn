@@ -52,6 +52,7 @@ type Database interface {
 	GetEventFromAttendee(attendeeID uuid.UUID) (models.Event, error)
 	GetEnrolledAttendee(firebaseID string) ([]models.EnrolledAttendee, error)
 	GetAllTicketAttendee(firebaseID string, eventId string) ([]models.TicketAttendee, error)
+	ChangeAttendeeTicketStatus(userId uuid.UUID, ticketId uuid.UUID, paid bool, firebaseId string)error
 
 	GetTicketsForAllEvents(firebaseId string) ([]models.EventsTicket, error)
 	GetInviteeForAllEvents(firebaseId string) ([]models.EventsInvitee, error)

@@ -144,11 +144,12 @@ func (p *PostgresDB) GetAttendeeFromUserIdandTicketId(userID, ticketID uuid.UUID
 func (p *PostgresDB) GetAllTicketAttendee(firebaseID string,eventId string) ([]models.TicketAttendee, error){
   query := `select 
   a.id, a.user_id,
-  t.id,t.name,t.price,t.paid,
-  u.full_name, u.phone_number, u.image_url,u.auto_id,u.position,u.company
+  t.id,t.name,t.price,a.paid,
+  u.full_name, u.phone_number, u.image_url,u.auto_id,u.position,u.company,uc.tag
   from attendee a
   join ticket t on t.id = a.ticket_id
   join users u on u.id = a.user_id
+  join users_category uc on uc.id = u.users_category_id
   where t.event_id = $1 AND u.firebase_id =$2 AND t.price >0;`
   rows, err := p.sql.Query(query,eventId,firebaseID)
   if err != nil {
@@ -171,6 +172,7 @@ func (p *PostgresDB) GetAllTicketAttendee(firebaseID string,eventId string) ([]m
       &attendee.AutoID,
       &attendee.Position,
       &attendee.Company,
+      &attendee.AttendeeTag,
     )
     if err != nil {
       return nil, err
@@ -181,21 +183,20 @@ func (p *PostgresDB) GetAllTicketAttendee(firebaseID string,eventId string) ([]m
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+func (p *PostgresDB) ChangeAttendeeTicketStatus(userId uuid.UUID, ticketId uuid.UUID, paid bool, firebaseId string) error {
+    query := `
+        UPDATE attendee
+        SET paid = $1
+        WHERE user_id = (
+            SELECT u.id FROM users u
+            WHERE u.id = $2 AND u.firebase_id = $4
+        )
+        AND ticket_id = $3
+        AND deleted_at IS NULL;
+    `
+    _, err := p.sql.Exec(query, paid, userId, ticketId, firebaseId)
+    return err
+}
 
 
 

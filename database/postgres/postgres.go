@@ -107,7 +107,6 @@ func (p *PostgresDB) createTables() error {
       name TEXT NOT NULL,
 			event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
 			price NUMERIC NOT NULL,
-      paid BOOLEAN NOT NULL DEFAULT FALSE,
 			start_time TIMESTAMPTZ NOT NULL,
 			end_time TIMESTAMPTZ NOT NULL,
 			deleted_at TIMESTAMPTZ
@@ -130,6 +129,7 @@ func (p *PostgresDB) createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			ticket_id UUID REFERENCES ticket(id) ON DELETE SET NULL,
+      paid BOOLEAN NOT NULL DEFAULT FALSE,
 			deleted_at TIMESTAMPTZ,
       UNIQUE (user_id, ticket_id)
 		);`,

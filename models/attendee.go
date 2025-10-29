@@ -12,11 +12,12 @@ type Attendee struct {
 type TicketAttendee struct {
 	ID          string    `json:"id"`
 	UserID      uuid.UUID `json:"attendee_id"`
+	AttendeeTag string    `json:"attendee_tag"`
 	AutoID      int       `json:"auto_id"`
 	Position    string    `json:"position"`
 	Company     string    `json:"company"`
 	TicketID    uuid.UUID `json:"ticket_id"`
-	TicketName  string `json:"ticket_name"`
+	TicketName  string    `json:"ticket_name"`
 	Amount      int       `json:"amount"`
 	Status      string    `json:"status"`
 	Name        string    `json:"name"`
